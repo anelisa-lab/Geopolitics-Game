@@ -1,3 +1,4 @@
+import { isDbConnected} from './config/db.js';
 import express from 'express';
 
 const app = express();
@@ -9,7 +10,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', db: isDbConnected() ? 'up' : 'down' });
 });
 
 export default app;
