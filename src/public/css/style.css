@@ -1,0 +1,17 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #f4f6f9; color: #16202c; }
+a { color: #2346c4; }
+.container { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+
+.navbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  padding: 12px 24px; background: #16202c; }
+.navbar a { color: #fff; text-decoration: none; }
+.navbar .brand { font-weight: 700; font-size: 18px; }
+.navbar ul { display: flex; gap: 16px; list-style: none; margin: 0; padding: 0; align-items: center; flex-wrap: wrap; }
+
+.btn { display: inline-block; background: #2346c4; color: #fff !important; padding: 8px 16px;
+  border-radius: 8px; text-decoration: none; font-weight: 600; }
+.hero { text-align: center; padding: 64px 0; }
+.hero h1 { font-size: 40px; margin-bottom: 8px; }
+.error-page { text-align: center; padding: 64px 0; }
+.error-page h1 { font-size: 72px; margin: 0; color: #cf3a3a; }
