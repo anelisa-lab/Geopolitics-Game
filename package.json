@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed": "node scripts/seedCountries.js"
+    "seed": "node scripts/seedCountries.js",
+    "test": "node --test"
   },
 
   "repository": {
