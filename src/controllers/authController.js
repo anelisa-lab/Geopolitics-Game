@@ -4,13 +4,19 @@ import { ValidationError } from '../domain/errors.js';
 
 const firstError = (result) => result.error.issues[0].message;
 
+// Only allow redirects within this site (stops "open redirect" tricks)
+function safeReturnTo(url) {
+  return typeof url === 'string' && url.startsWith('/') && !url.startsWith('//') ? url : '/dashboard';
+}
+
 // A fresh session ID on every login protects against "session fixation" attacks
 function startSession(req, user) {
+  const returnTo = safeReturnTo(req.session.returnTo);
   return new Promise((resolve, reject) => {
     req.session.regenerate((err) => {
       if (err) return reject(err);
       req.session.user = user;
-      req.session.save((saveErr) => (saveErr ? reject(saveErr) : resolve()));
+      req.session.save((saveErr) => (saveErr ? reject(saveErr) : resolve(returnTo)));
     });
   });
 }
@@ -31,8 +37,7 @@ export async function signup(req, res, next) {
   }
   try {
     const user = await authService.signup(result.data);
-    await startSession(req, user);
-    res.redirect('/');
+    res.redirect(await startSession(req, user));
   } catch (err) {
     if (err instanceof ValidationError) {
       return res.status(400).render('auth/signup', { title: 'Sign up', error: err.message, values });
@@ -49,8 +54,7 @@ export async function login(req, res, next) {
   }
   try {
     const user = await authService.login(result.data);
-    await startSession(req, user);
-    res.redirect('/');
+    res.redirect(await startSession(req, user));
   } catch (err) {
     if (err instanceof ValidationError) {
       return res.status(400).render('auth/login', { title: 'Log in', error: err.message, values });

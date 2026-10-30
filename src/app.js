@@ -6,6 +6,7 @@ import { isDbConnected } from './config/db.js';
 import { sessionMiddleware } from './config/session.js';
 import authRoutes from './routes/authRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
+import pageRoutes from './routes/pageRoutes.js';
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use(authRoutes);
+app.use(pageRoutes);
 
 // Error handling (must stay at the bottom)
 app.use(notFound);
