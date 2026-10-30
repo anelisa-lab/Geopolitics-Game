@@ -7,6 +7,7 @@ import { sessionMiddleware } from './config/session.js';
 import authRoutes from './routes/authRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import pageRoutes from './routes/pageRoutes.js';
+import gameRoutes from './routes/gameRoutes.js';
 
 const app = express();
 
@@ -20,7 +21,13 @@ app.use(expressLayouts);
 app.set('layout', 'layouts/main');
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      'img-src': ["'self'", 'data:', 'https://flagcdn.com'],
+    },
+  },
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(import.meta.dirname, 'public')));
@@ -43,6 +50,7 @@ app.get('/health', (req, res) => {
 
 app.use(authRoutes);
 app.use(pageRoutes);
+app.use(gameRoutes);
 
 // Error handling (must stay at the bottom)
 app.use(notFound);

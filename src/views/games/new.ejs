@@ -1,0 +1,30 @@
+<section class="form-card wide">
+  <h1>Start a new game</h1>
+  <p>Pick your country. 9 rivals will be chosen at random.</p>
+  <% if (error) { %><p class="form-error"><%= error %></p><% } %>
+
+  <form method="POST" action="/games">
+    <label for="title">Game name (optional)</label>
+    <input id="title" name="title" maxlength="60" value="<%= values.title || '' %>" placeholder="e.g. Friday night conquest">
+
+    <label for="country-search">Your country</label>
+    <input id="country-search" type="search" placeholder="Search <%= countries.length %> countries…" autocomplete="off">
+
+    <div class="country-list">
+      <% countries.forEach((country) => { %>
+        <label class="country-option" data-name="<%= country.name.toLowerCase() %>">
+          <input type="radio" name="iso2" value="<%= country.iso2 %>" required <%= values.iso2 === country.iso2 ? 'checked' : '' %>>
+          <img src="https://flagcdn.com/w40/<%= country.iso2.toLowerCase() %>.png" alt="" width="28" height="20" loading="lazy">
+          <span class="country-name"><%= country.name %></span>
+          <span class="country-meta">
+            <%= country.population.toLocaleString('en-US') %> people · <%= country.soldierValue %> soldier<%= country.soldierValue > 1 ? 's' : '' %>
+          </span>
+        </label>
+      <% }) %>
+    </div>
+    <p class="no-results" id="no-results" hidden>No countries match your search.</p>
+
+    <button type="submit" class="btn">Start game</button>
+  </form>
+</section>
+<script src="/js/countryPicker.js"></script>

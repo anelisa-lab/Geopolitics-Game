@@ -2,16 +2,18 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { User } from '../src/models/User.js';
 
-test('a valid user passes validation', () => {
+test('a valid user passes validation', async () => {
   const user = new User({ username: 'anelisa', email: 'a@example.com', passwordHash: 'hash' });
-  assert.equal(user.validateSync(), undefined);
+  await user.validate(); // throws if anything is invalid
 });
 
-test('bad usernames and emails are rejected', () => {
+test('bad usernames and emails are rejected', async () => {
   const user = new User({ username: 'a!', email: 'not-an-email', passwordHash: 'hash' });
-  const err = user.validateSync();
-  assert.ok(err.errors.username);
-  assert.ok(err.errors.email);
+  await assert.rejects(user.validate(), (err) => {
+    assert.ok(err.errors.username);
+    assert.ok(err.errors.email);
+    return true;
+  });
 });
 
 test('the password hash is never included in JSON', () => {

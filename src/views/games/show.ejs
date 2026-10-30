@@ -1,0 +1,38 @@
+<section>
+  <p class="eyebrow">Round <%= game.round %> · <%= game.statusLabel %></p>
+  <h1><%= game.title %></h1>
+
+  <% if (!game.isOwner) { %>
+    <p class="banner">👀 You're watching this game. <a href="/signup">Sign up</a> to start your own.</p>
+  <% } %>
+
+  <p>Current turn:
+    <strong style="color: <%= game.currentPlayer.color %>"><%= game.currentPlayer.name %></strong>
+    <%= game.currentPlayer.isHuman ? '(you)' : '' %>
+  </p>
+
+  <h2>Countries</h2>
+  <div class="board">
+    <% game.territories.forEach((territory) => { %>
+      <div class="territory" style="border-color: <%= territory.ownerColor %>">
+        <div class="territory-head">
+          <img src="https://flagcdn.com/w40/<%= territory.iso2.toLowerCase() %>.png" alt="" width="28" height="20">
+          <strong><%= territory.name %></strong>
+        </div>
+        <div class="soldiers"><%= territory.soldiers %></div>
+        <small>Held by <%= territory.ownerName %><%= territory.ownerIsHuman ? ' (you)' : '' %> · value <%= territory.soldierValue %></small>
+      </div>
+    <% }) %>
+  </div>
+
+  <h2>Turn order</h2>
+  <ol class="turn-order">
+    <% game.players.forEach((player) => { %>
+      <li class="<%= player.isCurrent ? 'current' : '' %>">
+        <span class="dot" style="background: <%= player.color %>"></span>
+        <%= player.name %><%= player.isHuman ? ' (you)' : '' %>
+        <small><%= player.territories %> countr<%= player.territories === 1 ? 'y' : 'ies' %> · <%= player.soldiers %> soldiers</small>
+      </li>
+    <% }) %>
+  </ol>
+</section>
