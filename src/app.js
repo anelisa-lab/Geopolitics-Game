@@ -3,9 +3,14 @@ import express from 'express';
 import helmet from 'helmet';
 import expressLayouts from 'express-ejs-layouts';
 import { isDbConnected } from './config/db.js';
+import { sessionMiddleware } from './config/session.js';
+import authRoutes from './routes/authRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
+
+// Render sits in front of the app as a proxy; this makes secure cookies work there
+app.set('trust proxy', 1);
 
 // Views
 app.set('view engine', 'ejs');
@@ -18,6 +23,13 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(import.meta.dirname, 'public')));
+app.use(sessionMiddleware);
+
+// Make the logged-in user available to every page
+app.use((req, res, next) => {
+  res.locals.currentUser = req.session.user || null;
+  next();
+});
 
 // Routes
 app.get('/', (req, res) => {
@@ -27,6 +39,8 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', db: isDbConnected() ? 'up' : 'down' });
 });
+
+app.use(authRoutes);
 
 // Error handling (must stay at the bottom)
 app.use(notFound);

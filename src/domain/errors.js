@@ -21,3 +21,6 @@ export class ForbiddenError extends AppError {
 export class NotFoundError extends AppError {
   constructor(message = 'Page not found.') { super(message, 404); }
 }
+export class ValidationError extends AppError {
+  constructor(message) { super(message, 400); }
+}

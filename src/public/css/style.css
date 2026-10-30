@@ -15,3 +15,16 @@ a { color: #2346c4; }
 .hero h1 { font-size: 40px; margin-bottom: 8px; }
 .error-page { text-align: center; padding: 64px 0; }
 .error-page h1 { font-size: 72px; margin: 0; color: #cf3a3a; }
+
+.form-card { max-width: 420px; margin: 32px auto; background: #fff; padding: 28px; border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06); }
+.form-card h1 { margin-top: 0; }
+.form-card form { display: grid; gap: 6px; margin-bottom: 16px; }
+.form-card label { font-weight: 600; margin-top: 10px; }
+.form-card input { padding: 10px 12px; border: 1px solid #cfd6df; border-radius: 8px; font-size: 15px; }
+.form-card small { color: #5a6575; }
+.form-card button { margin-top: 16px; border: none; cursor: pointer; font-size: 15px; }
+.form-error { background: #fdecec; color: #a32626; padding: 10px 12px; border-radius: 8px; }
+.nav-user { color: #cfd6df; }
+.inline-form { margin: 0; }
+.link-button { background: none; border: none; color: #fff; cursor: pointer; font-size: inherit; padding: 0; }

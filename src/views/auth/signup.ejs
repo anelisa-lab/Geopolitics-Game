@@ -1,0 +1,21 @@
+<section class="form-card">
+  <h1>Create your account</h1>
+  <% if (error) { %><p class="form-error"><%= error %></p><% } %>
+  <form method="POST" action="/signup" novalidate>
+    <label for="username">Username</label>
+    <input id="username" name="username" value="<%= values.username || '' %>" autocomplete="username" required>
+
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" value="<%= values.email || '' %>" autocomplete="email" required>
+
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" required>
+    <small>At least 8 characters, with a letter and a number.</small>
+
+    <label for="confirmPassword">Confirm password</label>
+    <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" required>
+
+    <button type="submit" class="btn">Sign up</button>
+  </form>
+  <p>Already have an account? <a href="/login">Log in</a></p>
+</section>
