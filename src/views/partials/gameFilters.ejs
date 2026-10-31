@@ -1,0 +1,19 @@
+<form method="GET" action="<%= basePath %>" class="filters">
+  <input type="search" name="q" value="<%= query.q %>" placeholder="Search by game name or country" aria-label="Search">
+
+  <select name="status" aria-label="Status">
+    <option value="">All statuses</option>
+    <option value="active" <%= query.status === 'active' ? 'selected' : '' %>>In progress</option>
+    <option value="won" <%= query.status === 'won' ? 'selected' : '' %>>Victory</option>
+    <option value="lost" <%= query.status === 'lost' ? 'selected' : '' %>>Defeated</option>
+  </select>
+
+  <select name="sort" aria-label="Sort by">
+    <option value="newest" <%= query.sort === 'newest' ? 'selected' : '' %>>Last played: newest</option>
+    <option value="oldest" <%= query.sort === 'oldest' ? 'selected' : '' %>>Last played: oldest</option>
+    <option value="rounds" <%= query.sort === 'rounds' ? 'selected' : '' %>>Most rounds</option>
+  </select>
+
+  <button type="submit" class="btn">Apply</button>
+  <% if (isFiltered) { %><a href="<%= basePath %>">Clear</a><% } %>
+</form>

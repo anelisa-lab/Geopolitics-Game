@@ -1,0 +1,18 @@
+<section>
+  <div class="page-head">
+    <h1>Browse games</h1>
+    <% if (currentUser) { %><a href="/games/new" class="btn">+ New game</a><% } %>
+  </div>
+  <p>Watch anyone's game. To play, <%- currentUser ? '<a href="/games/new">start your own</a>' : '<a href="/signup">sign up</a>' %>.</p>
+
+  <%- include('../partials/gameFilters') %>
+
+  <% if (items.length) { %>
+    <%- include('../partials/gameTable', { showOwner: true }) %>
+    <%- include('../partials/pagination') %>
+  <% } else if (isFiltered) { %>
+    <p class="empty">No games match your search. <a href="/games">Clear filters</a></p>
+  <% } else { %>
+    <p class="empty">No games yet. Be the first to start one!</p>
+  <% } %>
+</section>

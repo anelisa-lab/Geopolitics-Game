@@ -1,6 +1,8 @@
 import { countryRepository } from '../repositories/CountryRepository.js';
 import { gameRepository } from '../repositories/GameRepository.js';
 import { gameEventRepository } from '../repositories/GameEventRepository.js';
+import { userRepository } from '../repositories/UserRepository.js';
+import { buildGameSummary } from './gameView.js';
 import { shuffle } from '../domain/random.js';
 import { ValidationError } from '../domain/errors.js';
 
@@ -14,11 +16,18 @@ export class GameService {
   #countries;
   #games;
   #events;
+  #users;
 
-  constructor({ countries = countryRepository, games = gameRepository, events = gameEventRepository } = {}) {
+  constructor({
+    countries = countryRepository,
+    games = gameRepository,
+    events = gameEventRepository,
+    users = userRepository,
+  } = {}) {
     this.#countries = countries;
     this.#games = games;
     this.#events = events;
+    this.#users = users;
   }
 
   async listCountries() {
@@ -72,6 +81,23 @@ export class GameService {
 
     // Day 5: if an NPC goes first, NpcTurnRunner will play until it's the human's turn
     return game;
+  }
+
+  async listMyGames(userId, query) {
+    const result = await this.#games.findForOwner(userId, { search: query.q, ...query });
+    return { ...result, items: result.items.map((game) => buildGameSummary(game, userId)) };
+  }
+
+  async listPublicGames(viewerId, query) {
+    const result = await this.#games.findPublic({ search: query.q, ...query });
+    const ownerIds = [...new Set(result.items.map((game) => game.ownerId.toString()))];
+    const usernames = await this.#users.findUsernamesByIds(ownerIds);
+
+    return {
+      ...result,
+      items: result.items.map((game) =>
+        buildGameSummary(game, viewerId, usernames.get(game.ownerId.toString()) ?? 'Unknown player')),
+    };
   }
 }
 

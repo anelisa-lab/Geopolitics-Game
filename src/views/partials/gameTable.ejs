@@ -1,0 +1,37 @@
+<div class="table-wrap">
+  <table class="games-table">
+    <thead>
+      <tr>
+        <th>Game</th>
+        <% if (showOwner) { %><th>Player</th><% } %>
+        <th>Country</th>
+        <th>Status</th>
+        <th>Round</th>
+        <th>Countries held</th>
+        <th>Last played</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% items.forEach((game) => { %>
+        <tr>
+          <td><a href="/games/<%= game.id %>"><%= game.title %></a></td>
+          <% if (showOwner) { %><td><%= game.ownerName %></td><% } %>
+          <td>
+            <img src="https://flagcdn.com/w40/<%= game.humanIso2.toLowerCase() %>.png" alt="" width="24" height="17">
+            <%= game.humanCountry %>
+          </td>
+          <td><span class="badge badge-<%= game.status %>"><%= game.statusLabel %></span></td>
+          <td><%= game.round %></td>
+          <td><%= game.territoriesOwned %>/10</td>
+          <td><%= new Date(game.updatedAt).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' }) %></td>
+          <td>
+            <a href="/games/<%= game.id %>" class="btn btn-small">
+              <%= game.isOwner && game.status === 'active' ? 'Resume' : 'Watch' %>
+            </a>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

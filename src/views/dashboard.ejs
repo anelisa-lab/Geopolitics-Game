@@ -1,5 +1,17 @@
 <section>
-  <h1>My games</h1>
-  <p>Welcome, <%= currentUser.username %>. Your games will appear here.</p>
-  <a href="/games/new" class="btn">Start a new game</a>
+  <div class="page-head">
+    <h1>My games</h1>
+    <a href="/games/new" class="btn">+ New game</a>
+  </div>
+
+  <%- include('partials/gameFilters') %>
+
+  <% if (items.length) { %>
+    <%- include('partials/gameTable', { showOwner: false }) %>
+    <%- include('partials/pagination') %>
+  <% } else if (isFiltered) { %>
+    <p class="empty">No games match your search. <a href="/dashboard">Clear filters</a></p>
+  <% } else { %>
+    <p class="empty">You haven't started a game yet. <a href="/games/new">Start your first one</a> and conquer the world.</p>
+  <% } %>
 </section>

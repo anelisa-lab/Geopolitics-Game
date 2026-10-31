@@ -45,4 +45,23 @@ export function buildGameView(game, viewerId) {
     territories,
     isOwner: viewerId === game.ownerId.toString(),
   };
+}// One row in a games list
+export function buildGameSummary(game, viewerId, ownerName = null) {
+  const human = game.players.find((player) => player.type === 'human');
+  const currentPlayer = game.players.find((player) => player.playerId === game.turnOrder[game.currentTurnIndex]);
+
+  return {
+    id: game._id.toString(),
+    title: game.title,
+    humanCountry: human.name,
+    humanIso2: human.playerId,
+    ownerName,
+    status: game.status,
+    statusLabel: STATUS_LABELS[game.status],
+    round: game.round,
+    territoriesOwned: game.territories.filter((t) => t.ownerPlayerId === human.playerId).length,
+    currentPlayerName: currentPlayer.name,
+    updatedAt: game.updatedAt,
+    isOwner: viewerId === game.ownerId.toString(),
+  };
 }

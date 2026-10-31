@@ -18,6 +18,11 @@ export class UserRepository {
   async findById(id) {
     return User.findById(id).select('-passwordHash').lean();
   }
+    // Returns a Map of userId → username for many users in one query
+  async findUsernamesByIds(ids) {
+    const users = await User.find({ _id: { $in: ids } }).select('username').lean();
+    return new Map(users.map((user) => [user._id.toString(), user.username]));
+  }
 }
 
 export const userRepository = new UserRepository();

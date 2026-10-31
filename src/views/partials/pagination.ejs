@@ -1,0 +1,7 @@
+<% if (pages > 1) { %>
+  <nav class="pagination" aria-label="Pages">
+    <% if (prevUrl) { %><a href="<%= prevUrl %>">← Previous</a><% } else { %><span></span><% } %>
+    <span>Page <%= page %> of <%= pages %> · <%= total %> games</span>
+    <% if (nextUrl) { %><a href="<%= nextUrl %>">Next →</a><% } else { %><span></span><% } %>
+  </nav>
+<% } %>
