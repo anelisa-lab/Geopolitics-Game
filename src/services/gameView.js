@@ -1,9 +1,10 @@
 const STATUS_LABELS = { active: 'In progress', won: 'Victory', lost: 'Defeated' };
 
-// Only what the page needs, never the owner's ID or anything private
+// Everything a game page needs, and nothing private (like the owner's ID)
 export function buildGameView(game, viewerId) {
   const playersById = new Map(game.players.map((player) => [player.playerId, player]));
   const currentPlayerId = game.turnOrder[game.currentTurnIndex];
+  const human = game.players.find((player) => player.type === 'human');
 
   const territories = game.territories.map((territory) => {
     const owner = playersById.get(territory.ownerPlayerId);
@@ -12,6 +13,7 @@ export function buildGameView(game, viewerId) {
       name: territory.name,
       soldiers: territory.soldiers,
       soldierValue: territory.soldierValue,
+      ownerPlayerId: territory.ownerPlayerId,
       ownerName: owner.name,
       ownerColor: owner.color,
       ownerIsHuman: owner.type === 'human',
@@ -41,11 +43,22 @@ export function buildGameView(game, viewerId) {
     round: game.round,
     phase: game.phase,
     currentPlayer: players.find((player) => player.isCurrent),
+    humanPlayerId: human.playerId,
+    isHumanTurn: game.status === 'active' && currentPlayerId === human.playerId,
+    pendingReinforcements: game.pendingReinforcements,
+    attackUsed: game.attackUsed,
+    activeAttack: game.activeAttack
+      ? { from: game.activeAttack.fromIso2, to: game.activeAttack.toIso2, rolls: game.activeAttack.rolls }
+      : null,
+    winnerPlayerId: game.winnerPlayerId,
+    eventSeq: game.eventSeq,
     players,
     territories,
     isOwner: viewerId === game.ownerId.toString(),
   };
-}// One row in a games list
+}
+
+// One row in a games list
 export function buildGameSummary(game, viewerId, ownerName = null) {
   const human = game.players.find((player) => player.type === 'human');
   const currentPlayer = game.players.find((player) => player.playerId === game.turnOrder[game.currentTurnIndex]);

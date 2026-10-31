@@ -3,6 +3,9 @@ import { gameRepository } from '../repositories/GameRepository.js';
 import { gameEventRepository } from '../repositories/GameEventRepository.js';
 import { userRepository } from '../repositories/UserRepository.js';
 import { buildGameSummary } from './gameView.js';
+import { npcTurnRunner } from './NpcTurnRunner.js';
+import { Game } from '../domain/Game.js';
+import { BattleEngine } from '../domain/BattleEngine.js';
 import { shuffle } from '../domain/random.js';
 import { ValidationError } from '../domain/errors.js';
 
@@ -17,17 +20,23 @@ export class GameService {
   #games;
   #events;
   #users;
+  #engine;
+  #npcs;
 
   constructor({
     countries = countryRepository,
     games = gameRepository,
     events = gameEventRepository,
     users = userRepository,
+    engine = new BattleEngine(),
+    npcs = npcTurnRunner,
   } = {}) {
     this.#countries = countries;
     this.#games = games;
     this.#events = events;
     this.#users = users;
+    this.#engine = engine;
+    this.#npcs = npcs;
   }
 
   async listCountries() {
@@ -64,6 +73,7 @@ export class GameService {
       title: title || `${chosen.name} vs the world`,
       players,
       territories,
+      status: 'active',
       turnOrder: shuffle(players.map((player) => player.playerId)), // random first player
       currentTurnIndex: 0,
       round: 1,
@@ -79,9 +89,46 @@ export class GameService {
       payload: { humanCountry: chosen.name, turnOrder: game.turnOrder },
     }]);
 
-    // Day 5: if an NPC goes first, NpcTurnRunner will play until it's the human's turn
+    // If an NPC goes first, the NPCs play until it's the human's turn
+    await this.#play(game, null);
     return game;
   }
+
+  // ---------- The human's moves. Each returns the events it caused ----------
+
+  reinforce(gameDoc, allocations) {
+    return this.#play(gameDoc, (game, me) => game.reinforce(me, allocations));
+  }
+
+  transfer(gameDoc, { from, to, count }) {
+    return this.#play(gameDoc, (game, me) => game.transfer(me, from, to, count));
+  }
+
+  startAttack(gameDoc, { from, to }) {
+    return this.#play(gameDoc, (game, me) => game.startAttack(me, from, to));
+  }
+
+  rollAttack(gameDoc) {
+    return this.#play(gameDoc, (game, me) => game.rollAttack(me));
+  }
+
+  stopAttack(gameDoc) {
+    return this.#play(gameDoc, (game, me) => game.stopAttack(me));
+  }
+
+  conquestMove(gameDoc, { count }) {
+    return this.#play(gameDoc, (game, me) => game.conquestMove(me, count));
+  }
+
+  endTurn(gameDoc) {
+    return this.#play(gameDoc, (game, me) => game.endTurn(me));
+  }
+
+  async listEvents(gameId, afterSeq) {
+    return this.#events.listAfter(gameId, afterSeq);
+  }
+
+  // ---------- Lists ----------
 
   async listMyGames(userId, query) {
     const result = await this.#games.findForOwner(userId, { search: query.q, ...query });
@@ -98,6 +145,25 @@ export class GameService {
       items: result.items.map((game) =>
         buildGameSummary(game, viewerId, usernames.get(game.ownerId.toString()) ?? 'Unknown player')),
     };
+  }
+
+  // Load the saved game into the engine, make the move, let any NPCs play,
+  // then save the new board and its events. If a rule is broken, the engine
+  // throws before anything is saved.
+  async #play(gameDoc, action) {
+    const game = Game.fromDocument(gameDoc, this.#engine);
+    const humanId = gameDoc.players.find((player) => player.type === 'human').playerId;
+
+    if (action) action(game, humanId);
+    this.#npcs.runUntilHumanTurn(game);
+
+    const events = game.pullNewEvents();
+    if (!events.length) return [];
+
+    gameDoc.set(game.toDocument());
+    await this.#games.save(gameDoc);
+    await this.#events.append(gameDoc._id, events);
+    return events;
   }
 }
 

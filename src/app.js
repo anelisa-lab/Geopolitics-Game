@@ -5,9 +5,10 @@ import expressLayouts from 'express-ejs-layouts';
 import { isDbConnected } from './config/db.js';
 import { sessionMiddleware } from './config/session.js';
 import authRoutes from './routes/authRoutes.js';
-import { notFound, errorHandler } from './middleware/errorHandler.js';
 import pageRoutes from './routes/pageRoutes.js';
 import gameRoutes from './routes/gameRoutes.js';
+import apiRoutes from './routes/apiRoutes.js';
+import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.get('/health', (req, res) => {
 app.use(authRoutes);
 app.use(pageRoutes);
 app.use(gameRoutes);
+app.use('/api', apiRoutes);
 
 // Error handling (must stay at the bottom)
 app.use(notFound);
