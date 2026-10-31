@@ -219,3 +219,13 @@ test("the board can be read but not changed from outside", () => {
   game.territories[0].soldiers = 999; // changes a copy only
   assert.equal(territory(game, 'H').soldiers, 4);
 });
+test('only one attack per turn', () => {
+  // While an attack is running, you can't start another one
+  const game = makeGame({ soldiers: { H: 10 } });
+  game.startAttack('H', 'H', 'N1');
+  assert.throws(() => game.startAttack('H', 'H', 'N2'), GameRuleError);
+
+  // And if this turn's attack has already happened, you can't attack again
+  const alreadyAttacked = makeGame({ soldiers: { H: 10 }, attackUsed: true });
+  assert.throws(() => alreadyAttacked.startAttack('H', 'H', 'N2'), /once per turn/);
+});
