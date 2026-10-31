@@ -1,38 +1,50 @@
-<section>
-  <p class="eyebrow">Round <%= game.round %> · <%= game.statusLabel %></p>
-  <h1><%= game.title %></h1>
+<link rel="stylesheet" href="/css/game.css">
 
-  <% if (!game.isOwner) { %>
-    <p class="banner">👀 You're watching this game. <a href="/signup">Sign up</a> to start your own.</p>
-  <% } %>
+<div id="game" class="game" data-game-id="<%= game.id %>">
+  <header class="game-top">
+    <div class="game-heading">
+      <a href="<%= game.isOwner ? '/dashboard' : '/games' %>" class="back-link">← <%= game.isOwner ? 'My games' : 'Browse games' %></a>
+      <h1><%= game.title %></h1>
+      <div class="game-meta" id="game-meta">Round <%= game.round %> · <%= game.statusLabel %></div>
+    </div>
+    <button type="button" id="share-btn" class="btn btn-secondary">🔗 Share link</button>
+  </header>
 
-  <p>Current turn:
-    <strong style="color: <%= game.currentPlayer.color %>"><%= game.currentPlayer.name %></strong>
-    <%= game.currentPlayer.isHuman ? '(you)' : '' %>
-  </p>
+  <div id="banner" class="game-banner" hidden></div>
 
-  <h2>Countries</h2>
-  <div class="board">
-    <% game.territories.forEach((territory) => { %>
-      <div class="territory" style="border-color: <%= territory.ownerColor %>">
-        <div class="territory-head">
-          <img src="https://flagcdn.com/w40/<%= territory.iso2.toLowerCase() %>.png" alt="" width="28" height="20">
-          <strong><%= territory.name %></strong>
-        </div>
-        <div class="soldiers"><%= territory.soldiers %></div>
-        <small>Held by <%= territory.ownerName %><%= territory.ownerIsHuman ? ' (you)' : '' %> · value <%= territory.soldierValue %></small>
+  <div class="game-layout">
+    <section class="board-area" aria-label="Board">
+      <div id="actions" class="actions" aria-live="polite" hidden></div>
+      <div id="board" class="board-grid">
+        <% game.territories.forEach((territory) => { %>
+          <div class="country-card" style="--owner: <%= territory.ownerColor %>">
+            <div class="card-head">
+              <img src="https://flagcdn.com/w80/<%= territory.iso2.toLowerCase() %>.png" alt="" width="32" height="22">
+              <span class="card-name"><%= territory.name %></span>
+            </div>
+            <div class="card-soldiers"><%= territory.soldiers %></div>
+            <div class="card-owner"><%= territory.ownerName %> · value <%= territory.soldierValue %></div>
+          </div>
+        <% }) %>
       </div>
-    <% }) %>
-  </div>
+    </section>
 
-  <h2>Turn order</h2>
-  <ol class="turn-order">
-    <% game.players.forEach((player) => { %>
-      <li class="<%= player.isCurrent ? 'current' : '' %>">
-        <span class="dot" style="background: <%= player.color %>"></span>
-        <%= player.name %><%= player.isHuman ? ' (you)' : '' %>
-        <small><%= player.territories %> countr<%= player.territories === 1 ? 'y' : 'ies' %> · <%= player.soldiers %> soldiers</small>
-      </li>
-    <% }) %>
-  </ol>
-</section>
+    <aside class="panel players-panel" aria-label="Players">
+      <h2>Players</h2>
+      <ol id="players" class="players"></ol>
+    </aside>
+
+    <aside class="panel feed-panel" aria-label="Live feed">
+      <h2>Live feed</h2>
+      <ol id="feed" class="feed"></ol>
+    </aside>
+  </div>
+</div>
+
+<dialog id="dialog" class="game-dialog" aria-live="polite"></dialog>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<noscript><p class="banner">Turn on JavaScript to play. You can still see the board above.</p></noscript>
+
+<script type="application/json" id="initial-state"><%- initialStateJson %></script>
+<script type="module" src="/js/game/main.js"></script>

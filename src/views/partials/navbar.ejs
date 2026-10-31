@@ -1,10 +1,17 @@
+<%
+  // Highlights the page you're on
+  const navLink = (href, label, extraClass = '') => {
+    const active = currentPath === href;
+    return `<a href="${href}" class="${[extraClass, active ? 'active' : ''].join(' ').trim()}"${active ? ' aria-current="page"' : ''}>${label}</a>`;
+  };
+%>
 <nav class="navbar">
   <a href="/" class="brand">🌍 Geopolitics Game</a>
   <ul>
-    <li><a href="/games">Browse games</a></li>
+    <li><%- navLink('/games', 'Browse games') %></li>
     <% if (currentUser) { %>
-      <li><a href="/dashboard">My games</a></li>
-      <li><a href="/games/new">New game</a></li>
+      <li><%- navLink('/dashboard', 'My games') %></li>
+      <li><%- navLink('/games/new', 'New game') %></li>
       <li class="nav-user">👤 <%= currentUser.username %></li>
       <li>
         <form method="POST" action="/logout" class="inline-form">
@@ -12,8 +19,8 @@
         </form>
       </li>
     <% } else { %>
-      <li><a href="/login">Log in</a></li>
-      <li><a href="/signup" class="btn">Sign up</a></li>
+      <li><%- navLink('/login', 'Log in') %></li>
+      <li><%- navLink('/signup', 'Sign up', 'btn') %></li>
     <% } %>
   </ul>
 </nav>

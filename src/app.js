@@ -34,9 +34,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(import.meta.dirname, 'public')));
 app.use(sessionMiddleware);
 
-// Make the logged-in user available to every page
+// Make the logged-in user and the current page available to every view
 app.use((req, res, next) => {
   res.locals.currentUser = req.session.user || null;
+  res.locals.currentPath = req.path; // lets the navbar highlight the page you're on
   next();
 });
 

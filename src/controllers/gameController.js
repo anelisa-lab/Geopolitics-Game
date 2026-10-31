@@ -1,8 +1,8 @@
 import { gameService } from '../services/GameService.js';
 import { buildGameView } from '../services/gameView.js';
 import { createGameSchema } from '../validators/gameSchemas.js';
-import { ValidationError } from '../domain/errors.js';
 import { gameListQuerySchema } from '../validators/listSchemas.js';
+import { ValidationError } from '../domain/errors.js';
 
 async function renderNewGame(res, status, error, values = {}) {
   const countries = await gameService.listCountries();
@@ -29,8 +29,11 @@ export async function createGame(req, res, next) {
 
 export function showGame(req, res) {
   const game = buildGameView(req.game, req.session.user?.id);
-  res.render('games/show', { title: game.title, game });
+  // The page's script starts from this. Escaping "<" means a game name can never close the <script> tag early
+  const initialStateJson = JSON.stringify(game).replace(/</g, '\\u003c');
+  res.render('games/show', { title: game.title, game, initialStateJson });
 }
+
 // Rebuilds the URL query (?q=...&status=...) for page links, so filters stay applied
 function listUrl(basePath, query, page) {
   const params = new URLSearchParams();
