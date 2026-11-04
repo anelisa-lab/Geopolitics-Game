@@ -4,6 +4,7 @@ import { gameEventRepository } from '../repositories/GameEventRepository.js';
 import { userRepository } from '../repositories/UserRepository.js';
 import { buildGameSummary } from './gameView.js';
 import { npcTurnRunner } from './NpcTurnRunner.js';
+import { commentaryService } from '../ai/CommentaryService.js';
 import { Game } from '../domain/Game.js';
 import { BattleEngine } from '../domain/BattleEngine.js';
 import { shuffle } from '../domain/random.js';
@@ -22,6 +23,7 @@ export class GameService {
   #users;
   #engine;
   #npcs;
+  #commentary;
 
   constructor({
     countries = countryRepository,
@@ -30,6 +32,7 @@ export class GameService {
     users = userRepository,
     engine = new BattleEngine(),
     npcs = npcTurnRunner,
+    commentary = null, // tests leave this out, so they never call the real AI
   } = {}) {
     this.#countries = countries;
     this.#games = games;
@@ -37,6 +40,7 @@ export class GameService {
     this.#users = users;
     this.#engine = engine;
     this.#npcs = npcs;
+    this.#commentary = commentary;
   }
 
   async listCountries() {
@@ -160,6 +164,9 @@ export class GameService {
     const events = game.pullNewEvents();
     if (!events.length) return [];
 
+    // Live commentary for every dice roll in this move (AI, or ready-made lines)
+    if (this.#commentary) await this.#commentary.annotate(events, game);
+
     gameDoc.set(game.toDocument());
     await this.#games.save(gameDoc);
     await this.#events.append(gameDoc._id, events);
@@ -167,4 +174,4 @@ export class GameService {
   }
 }
 
-export const gameService = new GameService();
+export const gameService = new GameService({ commentary: commentaryService });

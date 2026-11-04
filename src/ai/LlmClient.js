@@ -20,15 +20,15 @@ export class LlmClient {
     return Boolean(this.#apiKey && this.#baseUrl && this.#model);
   }
 
-  // Sends one prompt and returns the model's answer as text.
-  // Tries a second time if the first attempt times out or the provider has a hiccup.
-  async complete(prompt, { maxTokens = 300 } = {}) {
+  // Sends one prompt and returns the model's answer as text. By default it tries a
+  // second time if the first attempt times out or the provider has a hiccup.
+  async complete(prompt, { maxTokens = 300, timeoutMs = this.#timeoutMs, attempts = 2 } = {}) {
     if (!this.isConfigured) throw new Error('No AI model is set up. Add LLM_API_KEY to .env.');
 
     let lastError;
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
       try {
-        return await this.#send(prompt, maxTokens);
+        return await this.#send(prompt, maxTokens, timeoutMs);
       } catch (err) {
         lastError = err;
         if (!err.retryable) break; // e.g. a wrong API key: trying again won't help
@@ -37,7 +37,7 @@ export class LlmClient {
     throw lastError;
   }
 
-  async #send(prompt, maxTokens) {
+  async #send(prompt, maxTokens, timeoutMs) {
     let res;
     try {
       res = await this.#fetch(`${this.#baseUrl}/chat/completions`, {
@@ -51,7 +51,7 @@ export class LlmClient {
           max_tokens: maxTokens,
           messages: [{ role: 'user', content: prompt }],
         }),
-        signal: AbortSignal.timeout(this.#timeoutMs),
+        signal: AbortSignal.timeout(timeoutMs),
       });
     } catch (err) {
       // No answer in time, or no connection

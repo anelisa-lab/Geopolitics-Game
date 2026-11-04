@@ -270,6 +270,7 @@ class GameScreen {
           versus(territory(p.from), territory(p.to), p.attackerSoldiers, p.defenderSoldiers),
           el('div', { class: 'dice' }),
           el('p', { class: 'roll-summary' }),
+                    el('p', { class: 'commentary' }),
         );
         break;
       case 'DICE_ROLL':
@@ -278,6 +279,7 @@ class GameScreen {
         arenaFight.querySelector('[data-role="attacker"]').textContent = p.attackerSoldiers;
         arenaFight.querySelector('[data-role="defender"]').textContent = p.defenderSoldiers;
         summary().textContent = rollSummary(p, territory(p.from), territory(p.to));
+                arenaFight.querySelector('.commentary').textContent = event.commentary ? `🎙️ ${event.commentary}` : '';
         break;
       case 'CONQUEST':
         if (summary()) summary().textContent = `🏳️ ${territory(p.to).name} falls to ${player.name}!`;
@@ -611,6 +613,7 @@ class GameScreen {
       versus(from, to),
       dice,
       summary,
+            el('p', { class: 'commentary', id: 'battle-commentary' }),
       el('div', { class: 'dialog-actions' },
         el('button', { class: 'btn btn-secondary', id: 'stop-btn', onClick: () => this.#stopAttack() }, 'Stop attack (ends turn)'),
         el('button', { class: 'btn btn-danger', id: 'roll-btn', onClick: () => this.#roll(from, to) }, '🎲 Roll')),
@@ -636,6 +639,9 @@ class GameScreen {
       this.#dialog.querySelector('[data-role="attacker"]').textContent = roll.attackerSoldiers;
       this.#dialog.querySelector('[data-role="defender"]').textContent = roll.defenderSoldiers;
       this.#dialog.querySelector('.roll-summary').textContent = rollSummary(roll, fromBefore, toBefore);
+            const commentary = events.find((e) => e.type === 'DICE_ROLL')?.commentary;
+      this.#dialog.querySelector('#battle-commentary').textContent = commentary ? `🎙️ ${commentary}` : '';
+
     }
 
     const actions = this.#dialog.querySelector('.dialog-actions');
