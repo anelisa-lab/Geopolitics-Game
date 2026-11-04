@@ -111,6 +111,32 @@ button.country-card:disabled { opacity: 0.6; }
 .outcome-win { color: #135c39; }
 .outcome-lose { color: #8a1f1f; }
 
+/* Fast-forward button */
+.top-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.ff-btn[aria-pressed="true"] { background: #2346c4; color: #fff !important; }
+
+/* Arena: the other players' moves as they happen (Day 5) */
+.arena { background: #fff; border: 1px solid #dde2ea; border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; }
+.arena-turn { font-weight: 800; box-shadow: inset 4px 0 0 var(--owner, #8a94a3); padding-left: 10px; }
+.arena-thought { margin: 0; color: #2b3644; font-size: 15px; }
+.arena-thought:empty { display: none; }
+.arena-fight:empty { display: none; }
+.arena .versus { max-width: 520px; }
+.arena .side { padding: 8px; }
+.arena .side img { width: 36px; height: auto; }
+.arena .side-soldiers { font-size: 26px; }
+.arena .die { width: 36px; height: 36px; font-size: 18px; }
+.arena .dice { justify-content: flex-start; margin-top: 10px; }
+.arena .roll-summary { text-align: left; }
+
+/* Cards in the current battle */
+.country-card.fight-from { box-shadow: 0 0 0 3px #c4352f; }
+.country-card.fight-to { box-shadow: 0 0 0 3px #c4352f; animation: pulse 0.9s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(196, 53, 47, 0.35); } }
+
+/* NPC explanations in the feed */
+.feed-npc .feed-text { color: #2b3644; font-style: italic; }
+
 /* Toasts */
 .toasts { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; z-index: 20; }
 .toast { background: #16202c; color: #fff; padding: 10px 14px; border-radius: 10px; max-width: 360px; font-size: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); }
@@ -126,5 +152,5 @@ button.country-card:disabled { opacity: 0.6; }
   .card-soldiers { font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .country-card, .die.rolling { transition: none; animation: none; }
+  .country-card, .die.rolling, .country-card.fight-to { transition: none; animation: none; }
 }

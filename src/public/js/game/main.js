@@ -2,6 +2,7 @@ import { createApi } from './api.js';
 import { el, flagUrl, plural } from './dom.js';
 import { Feed } from './feed.js';
 import { versus, animateRoll, rollSummary } from './battle.js';
+import { applyEvent } from './replay.js';
 import { winChance } from './odds.js';
 import { toast } from './toast.js';
 
@@ -15,22 +16,45 @@ const PHASE_LABELS = {
   GAME_OVER: 'Game over',
 };
 
-// Runs the game page: draws the board from the game's state, turns clicks into moves,
-// and keeps the page up to date for players and watchers
+// How long each kind of move stays on screen (milliseconds) at normal speed
+const DELAYS = {
+  TURN_START: 400,
+  NPC_DECISION: 1100,
+  REINFORCE: 450,
+  TRANSFER: 450,
+  ATTACK_START: 650,
+  DICE_ROLL: 750,
+  CONQUEST: 900,
+  CONQUEST_MOVE: 450,
+  ATTACK_FAILED: 650,
+  ATTACK_STOPPED: 550,
+  ELIMINATION: 1200,
+};
+const FAST_FACTOR = 0.12; // fast-forward plays moves about 8 times faster, but still shows every one
+const FAST_FORWARD_KEY = 'geopolitics-fast-forward';
+
+// Runs the game page: draws the board, turns clicks into moves, and plays back
+// everyone else's moves one at a time so the player can follow them
 class GameScreen {
   #api;
-  #state;
+  #state;                    // the latest board from the server
+  #view;                     // the board on screen (catches up with #state during playback)
   #feed;
   #dialog;
   #els;
   #lastSeq = 0;
-  #busy = false;
+  #busy = false;             // a move is on its way to the server
+  #playing = false;          // other players' moves are being shown
+  #queue = [];
+  #fast = false;
+  #wake = null;              // ends the current pause early when fast-forward is switched on
   #selected = null;          // the player's country chosen to attack or move from
   #allocations = new Map();  // reinforcements placed but not yet confirmed
 
   constructor(root, initialState) {
     this.#api = createApi(root.dataset.gameId);
     this.#state = initialState;
+    this.#view = structuredClone(initialState);
     this.#feed = new Feed(document.getElementById('feed'));
     this.#dialog = document.getElementById('dialog');
     this.#els = {
@@ -39,9 +63,21 @@ class GameScreen {
       players: document.getElementById('players'),
       actions: document.getElementById('actions'),
       board: document.getElementById('board'),
+      fastForward: document.getElementById('ff-btn'),
+      arena: document.getElementById('arena'),
+      arenaTurn: document.getElementById('arena-turn'),
+      arenaThought: document.getElementById('arena-thought'),
+      arenaFight: document.getElementById('arena-fight'),
     };
 
+    try {
+      this.#fast = localStorage.getItem(FAST_FORWARD_KEY) === 'on';
+    } catch {
+      // storage blocked: start at normal speed
+    }
+
     document.getElementById('share-btn').addEventListener('click', () => this.#share());
+    this.#els.fastForward.addEventListener('click', () => this.#toggleFastForward());
 
     // Escape mustn't close the window in the middle of a battle or conquest
     this.#dialog.addEventListener('cancel', (event) => {
@@ -52,8 +88,10 @@ class GameScreen {
   async start() {
     this.#render();
     try {
+      // The history so far goes straight into the feed (no need to replay it)
       const { events } = await this.#api.events(0);
-      this.#applyEvents(events);
+      this.#feed.add(events, this.#view);
+      if (events.length) this.#lastSeq = Math.max(...events.map((event) => event.seq));
     } catch {
       toast('The game history could not be loaded. Refresh to try again.', 'error');
     }
@@ -64,7 +102,7 @@ class GameScreen {
   // ---------- Helpers ----------
 
   get #canAct() {
-    return this.#state.isOwner && this.#state.isHumanTurn && !this.#busy;
+    return this.#state.isOwner && this.#state.isHumanTurn && !this.#busy && !this.#playing;
   }
 
   #territory(iso2) {
@@ -98,17 +136,74 @@ class GameScreen {
     }
   }
 
+  // New board from the server, plus the moves that led to it. The moves are played back in order
   #apply(state, events = []) {
     this.#state = state;
-    this.#applyEvents(events);
     if (state.phase !== 'REINFORCE') this.#allocations.clear();
     if (state.phase !== 'PLANNING' || !state.isHumanTurn) this.#selected = null;
+
+    const fresh = events.filter((event) => event.seq > this.#lastSeq);
+    if (fresh.length) this.#lastSeq = Math.max(...fresh.map((event) => event.seq));
+    this.#queue.push({ events: fresh, state });
+    if (!this.#playing) this.#playBack();
   }
 
-  #applyEvents(events) {
-    if (!events.length) return;
-    this.#feed.add(events, this.#state);
-    this.#lastSeq = Math.max(this.#lastSeq, ...events.map((event) => event.seq));
+  async #playBack() {
+    this.#playing = true;
+    let othersMoved = false;
+
+    while (this.#queue.length) {
+      const { events, state } = this.#queue.shift();
+      for (const event of events) {
+        applyEvent(this.#view, event);
+        this.#feed.add([event], this.#view);
+
+        const pause = this.#pauseFor(event);
+        if (pause) {
+          othersMoved = true;
+          this.#showInArena(event);
+          this.#render();
+          await this.#wait(pause);
+        }
+      }
+      // The server's board is always the final word
+      this.#view = structuredClone(state);
+    }
+
+    this.#playing = false;
+    this.#els.arena.hidden = true;
+    this.#render();
+    if (othersMoved && this.#state.isOwner && this.#state.isHumanTurn) toast('Your turn!');
+  }
+
+  // The player's own moves were already shown in the battle window, so they aren't replayed
+  #pauseFor(event) {
+    if (this.#state.isOwner && event.playerId === this.#view.humanPlayerId) return 0;
+    const pause = DELAYS[event.type] ?? 0;
+    return this.#fast ? Math.round(pause * FAST_FACTOR) : pause;
+  }
+
+  #wait(ms) {
+    return new Promise((resolve) => {
+      const done = () => {
+        clearTimeout(timer);
+        this.#wake = null;
+        resolve();
+      };
+      const timer = setTimeout(done, ms);
+      this.#wake = done;
+    });
+  }
+
+  #toggleFastForward() {
+    this.#fast = !this.#fast;
+    try {
+      localStorage.setItem(FAST_FORWARD_KEY, this.#fast ? 'on' : 'off');
+    } catch {
+      // not remembered next time, but still works now
+    }
+    if (this.#fast) this.#wake?.(); // skip the rest of the current pause
+    this.#render();
   }
 
   async #refresh() {
@@ -123,12 +218,11 @@ class GameScreen {
 
   // Watchers (and other tabs) pick up new moves every few seconds
   async #poll() {
-    if (this.#busy || document.hidden || this.#dialog.open) return;
+    if (this.#busy || this.#playing || document.hidden || this.#dialog.open) return;
     try {
       const { events } = await this.#api.events(this.#lastSeq);
       if (!events.length) return;
       this.#apply(await this.#api.state(), events);
-      this.#render();
     } catch {
       // try again next time
     }
@@ -150,6 +244,60 @@ class GameScreen {
     }
   }
 
+  // ---------- The arena: other players' moves as they happen ----------
+
+  #showInArena(event) {
+    const v = this.#view;
+    const p = event.payload ?? {};
+    const territory = (iso2) => v.territories.find((t) => t.iso2 === iso2);
+    const player = v.players.find((pl) => pl.playerId === event.playerId);
+    const { arena, arenaTurn, arenaThought, arenaFight } = this.#els;
+    const summary = () => arenaFight.querySelector('.roll-summary');
+    arena.hidden = false;
+
+    switch (event.type) {
+      case 'TURN_START':
+        arenaTurn.textContent = `${player.name}'s turn`;
+        arenaTurn.style.setProperty('--owner', player.color);
+        arenaThought.textContent = '';
+        arenaFight.replaceChildren();
+        break;
+      case 'NPC_DECISION':
+        arenaThought.textContent = `🤖 ${event.justification}`;
+        break;
+      case 'ATTACK_START':
+        arenaFight.replaceChildren(
+          versus(territory(p.from), territory(p.to), p.attackerSoldiers, p.defenderSoldiers),
+          el('div', { class: 'dice' }),
+          el('p', { class: 'roll-summary' }),
+        );
+        break;
+      case 'DICE_ROLL':
+        if (!arenaFight.querySelector('.dice')) break;
+        animateRoll(arenaFight.querySelector('.dice'), p.pairs, this.#fast ? 60 : 350);
+        arenaFight.querySelector('[data-role="attacker"]').textContent = p.attackerSoldiers;
+        arenaFight.querySelector('[data-role="defender"]').textContent = p.defenderSoldiers;
+        summary().textContent = rollSummary(p, territory(p.from), territory(p.to));
+        break;
+      case 'CONQUEST':
+        if (summary()) summary().textContent = `🏳️ ${territory(p.to).name} falls to ${player.name}!`;
+        break;
+      case 'ATTACK_FAILED':
+        if (summary()) summary().textContent = `${territory(p.from).name} is down to its last soldier. The attack fails.`;
+        break;
+      case 'ATTACK_STOPPED':
+        if (summary()) summary().textContent = `${player.name} calls off the attack.`;
+        break;
+      case 'ELIMINATION': {
+        const out = v.players.find((pl) => pl.playerId === p.playerId);
+        arenaThought.textContent = `☠️ ${out.isHuman && v.isOwner ? 'You have' : `${out.name} has`} been eliminated.`;
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
   // ---------- Drawing the page ----------
 
   #render() {
@@ -158,41 +306,43 @@ class GameScreen {
     this.#renderPlayers();
     this.#renderActions();
     this.#renderBoard();
+    this.#els.fastForward.setAttribute('aria-pressed', String(this.#fast));
+    this.#els.fastForward.textContent = this.#fast ? '⏩ Fast-forward: on' : '⏩ Fast-forward: off';
   }
 
   #renderMeta() {
-    const s = this.#state;
-    let turn = `${s.currentPlayer.name}'s turn`;
-    if (s.status !== 'active') turn = s.statusLabel;
-    else if (s.isHumanTurn) turn = s.isOwner ? 'Your turn' : `${s.currentPlayer.name}'s turn (player)`;
+    const v = this.#view;
+    let turn = `${v.currentPlayer.name}'s turn`;
+    if (v.status !== 'active') turn = v.statusLabel;
+    else if (v.isHumanTurn) turn = v.isOwner ? 'Your turn' : `${v.currentPlayer.name}'s turn (player)`;
 
     this.#els.meta.replaceChildren(
-      el('span', { class: 'chip' }, `Round ${s.round}`),
-      el('span', { class: 'chip' }, PHASE_LABELS[s.phase]),
-      el('span', { class: 'chip chip-turn', style: { '--owner': s.currentPlayer.color } }, turn),
+      el('span', { class: 'chip' }, `Round ${v.round}`),
+      el('span', { class: 'chip' }, PHASE_LABELS[v.phase]),
+      el('span', { class: 'chip chip-turn', style: { '--owner': v.currentPlayer.color } }, turn),
     );
   }
 
   #renderBanner() {
-    const s = this.#state;
+    const v = this.#view;
     const banner = this.#els.banner;
     banner.className = 'game-banner';
 
-    if (s.status === 'won') {
+    if (v.status === 'won') {
       banner.classList.add('banner-won');
       banner.replaceChildren(
         el('strong', {}, '🏆 Victory!'),
-        ` ${s.isOwner ? 'You' : 'The player'} conquered all 10 countries in ${plural(s.round, 'round')}.`,
-        s.isOwner ? el('a', { href: '/games/new', class: 'btn btn-small' }, 'Play again') : null,
+        ` ${v.isOwner ? 'You' : 'The player'} conquered all 10 countries in ${plural(v.round, 'round')}.`,
+        v.isOwner ? el('a', { href: '/games/new', class: 'btn btn-small' }, 'Play again') : null,
       );
-    } else if (s.status === 'lost') {
+    } else if (v.status === 'lost') {
       banner.classList.add('banner-lost');
       banner.replaceChildren(
         el('strong', {}, 'Defeated.'),
-        ` ${s.isOwner ? 'Your' : "The player's"} last country has fallen.`,
-        s.isOwner ? el('a', { href: '/games/new', class: 'btn btn-small' }, 'Try again') : null,
+        ` ${v.isOwner ? 'Your' : "The player's"} last country has fallen.`,
+        v.isOwner ? el('a', { href: '/games/new', class: 'btn btn-small' }, 'Try again') : null,
       );
-    } else if (!s.isOwner) {
+    } else if (!v.isOwner) {
       banner.classList.add('banner-watch');
       banner.replaceChildren(
         el('strong', {}, '👀 You’re watching this game.'),
@@ -207,14 +357,15 @@ class GameScreen {
   }
 
   #renderPlayers() {
+    const v = this.#view;
     this.#els.players.replaceChildren(
-      ...this.#state.players.map((player) =>
+      ...v.players.map((player) =>
         el('li', {
           class: ['player', player.isCurrent && 'current', player.eliminated && 'eliminated'].filter(Boolean).join(' '),
           style: { '--owner': player.color },
         },
           el('span', { class: 'dot' }),
-          el('span', { class: 'player-name' }, player.name, player.isHuman ? el('span', { class: 'you' }, this.#state.isOwner ? ' (you)' : ' (player)') : null),
+          el('span', { class: 'player-name' }, player.name, player.isHuman ? el('span', { class: 'you' }, v.isOwner ? ' (you)' : ' (player)') : null),
           el('span', { class: 'player-stats' },
             player.eliminated ? '☠ Eliminated' : `${plural(player.territories, 'country', 'countries')} · ${plural(player.soldiers, 'soldier')}`))),
     );
@@ -222,16 +373,19 @@ class GameScreen {
 
   #renderActions() {
     const s = this.#state;
+    const v = this.#view;
     const box = this.#els.actions;
     box.hidden = false;
 
-    if (s.status !== 'active' || !s.isOwner) {
+    if (v.status !== 'active' || !s.isOwner) {
       box.hidden = true;
       return;
     }
 
-    if (!s.isHumanTurn) {
-      box.replaceChildren(el('p', {}, `⏳ Waiting for ${s.currentPlayer.name} to play…`));
+    if (this.#playing || !s.isHumanTurn) {
+      box.replaceChildren(el('p', {},
+        el('strong', {}, `⏳ ${v.isHumanTurn ? 'Catching up…' : `${v.currentPlayer.name} is playing…`} `),
+        this.#fast ? 'Fast-forward is on.' : 'Turn on ⏩ Fast-forward to speed up the other players.'));
       return;
     }
 
@@ -286,15 +440,16 @@ class GameScreen {
   }
 
   #renderBoard() {
-    this.#els.board.replaceChildren(...this.#state.territories.map((territory) => this.#card(territory)));
+    this.#els.board.replaceChildren(...this.#view.territories.map((territory) => this.#card(territory)));
   }
 
   #card(territory) {
-    const s = this.#state;
+    const v = this.#view;
     const mine = this.#isMine(territory);
     const extra = this.#allocations.get(territory.iso2) ?? 0;
-    const reinforcing = this.#canAct && s.phase === 'REINFORCE';
-    const planning = this.#canAct && s.phase === 'PLANNING';
+    const reinforcing = this.#canAct && this.#state.phase === 'REINFORCE';
+    const planning = this.#canAct && this.#state.phase === 'PLANNING';
+    const fight = v.activeAttack;
 
     // In planning, which cards can be clicked right now?
     let clickable = false;
@@ -308,7 +463,7 @@ class GameScreen {
         hint = 'Click again to cancel';
       } else {
         clickable = true;
-        hint = mine ? `Move soldiers here` : `Attack ${territory.name}`;
+        hint = mine ? 'Move soldiers here' : `Attack ${territory.name}`;
       }
     }
 
@@ -318,6 +473,8 @@ class GameScreen {
       this.#selected === territory.iso2 && 'selected',
       planning && this.#selected && this.#selected !== territory.iso2 && (mine ? 'move-target' : 'attack-target'),
       clickable && 'clickable',
+      fight && fight.from === territory.iso2 && 'fight-from',
+      fight && fight.to === territory.iso2 && 'fight-to',
     ].filter(Boolean).join(' ');
 
     const content = [
@@ -327,12 +484,12 @@ class GameScreen {
       el('div', { class: 'card-soldiers' },
         String(territory.soldiers),
         extra ? el('span', { class: 'card-extra' }, ` +${extra}`) : null),
-      el('div', { class: 'card-owner' }, mine && s.isOwner ? 'Yours' : territory.ownerName, ` · value ${territory.soldierValue}`),
+      el('div', { class: 'card-owner' }, mine && v.isOwner ? 'Yours' : territory.ownerName, ` · value ${territory.soldierValue}`),
       hint && clickable ? el('div', { class: 'card-hint' }, hint) : null,
     ];
 
     if (reinforcing && mine) {
-      const left = s.pendingReinforcements - this.#placed();
+      const left = this.#state.pendingReinforcements - this.#placed();
       content.push(el('div', { class: 'card-stepper' },
         el('button', { class: 'step', 'aria-label': `One fewer soldier for ${territory.name}`, disabled: extra === 0, onClick: () => this.#adjust(territory.iso2, -1) }, '−'),
         el('button', { class: 'step', 'aria-label': `One more soldier for ${territory.name}`, disabled: left === 0, onClick: () => this.#adjust(territory.iso2, 1) }, '+')));
@@ -380,8 +537,7 @@ class GameScreen {
   }
 
   async #endTurn() {
-    const events = await this.#run(() => this.#api.endTurn());
-    if (events) toast(this.#state.isHumanTurn ? 'The other players have moved. Your turn again.' : 'Turn ended.');
+    await this.#run(() => this.#api.endTurn());
   }
 
   #openAttackConfirm(fromIso2, toIso2) {
@@ -448,10 +604,7 @@ class GameScreen {
     const summary = el('p', { class: 'roll-summary' },
       lastRoll ? rollSummary(lastRoll, from, to) : `Each die is one soldier. ${Math.min(from.soldiers - 1, to.soldiers)} dice per side this roll.`);
 
-    if (lastRoll) {
-      // Show the last roll's settled dice when redrawing
-      animateRoll(dice, lastRoll.pairs);
-    }
+    if (lastRoll) animateRoll(dice, lastRoll.pairs, 0);
 
     this.#showDialog(
       el('h2', {}, `${from.name} attacks ${to.name}`),
@@ -498,7 +651,7 @@ class GameScreen {
     } else if (failed) {
       actions.replaceChildren(
         el('p', { class: 'outcome outcome-lose' }, `${fromBefore.name} is down to its last soldier. The attack fails and your turn ends.`),
-        close(),
+        close('See what the others do'),
       );
     } else {
       buttons.forEach((b) => { b.disabled = false; });
@@ -507,10 +660,7 @@ class GameScreen {
 
   async #stopAttack() {
     const events = await this.#run(() => this.#api.stop());
-    if (events) {
-      this.#closeDialog();
-      toast('Attack called off. Your turn is over.');
-    }
+    if (events) this.#closeDialog();
   }
 
   #openConquestMove() {
@@ -547,10 +697,7 @@ class GameScreen {
 
   async #confirmConquestMove(count) {
     const events = await this.#run(() => this.#api.conquestMove(count));
-    if (events) {
-      this.#closeDialog();
-      toast(this.#state.isHumanTurn ? 'The other players have moved. Your turn again.' : 'Turn over.');
-    }
+    if (events) this.#closeDialog();
   }
 
   // ---------- Dialog window ----------

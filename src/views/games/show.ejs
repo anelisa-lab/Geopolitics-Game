@@ -7,7 +7,10 @@
       <h1><%= game.title %></h1>
       <div class="game-meta" id="game-meta">Round <%= game.round %> · <%= game.statusLabel %></div>
     </div>
-    <button type="button" id="share-btn" class="btn btn-secondary">🔗 Share link</button>
+    <div class="top-buttons">
+      <button type="button" id="ff-btn" class="btn btn-secondary ff-btn" aria-pressed="false" title="Speeds up the other players' moves. Every move is still shown.">⏩ Fast-forward: off</button>
+      <button type="button" id="share-btn" class="btn btn-secondary">🔗 Share link</button>
+    </div>
   </header>
 
   <div id="banner" class="game-banner" hidden></div>
@@ -15,6 +18,11 @@
   <div class="game-layout">
     <section class="board-area" aria-label="Board">
       <div id="actions" class="actions" aria-live="polite" hidden></div>
+      <div id="arena" class="arena" aria-live="polite" hidden>
+        <div id="arena-turn" class="arena-turn"></div>
+        <p id="arena-thought" class="arena-thought"></p>
+        <div id="arena-fight" class="arena-fight"></div>
+      </div>
       <div id="board" class="board-grid">
         <% game.territories.forEach((territory) => { %>
           <div class="country-card" style="--owner: <%= territory.ownerColor %>">

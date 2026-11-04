@@ -228,6 +228,12 @@ export class Game {
     this.#advanceTurn();
   }
 
+  // NPCs explain each decision before making it. The explanation is shown to the player
+  recordDecision(playerId, action, justification) {
+    this.#assertTurn(playerId);
+    this.#emit('NPC_DECISION', { action }, { justification });
+  }
+
   // Skip: end the turn without attacking (or after transfers)
   endTurn(playerId) {
     this.#assertTurn(playerId);
@@ -319,7 +325,7 @@ export class Game {
     }
   }
 
-  #emit(type, payload = {}) {
+  #emit(type, payload = {}, extra = {}) {
     this.#eventSeq++;
     this.#newEvents.push({
       seq: this.#eventSeq,
@@ -327,6 +333,7 @@ export class Game {
       playerId: this.#turnOrder[this.#currentTurnIndex],
       type,
       payload,
+      ...extra,
     });
   }
 

@@ -1,7 +1,7 @@
 import { el, flagUrl } from './dom.js';
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ROLL_MS = reducedMotion ? 0 : 650;
+const ROLL_MS = 650;
 
 // Attacker vs defender, with flags and soldier counts
 export function versus(from, to, attackerSoldiers = from.soldiers, defenderSoldiers = to.soldiers) {
@@ -21,14 +21,15 @@ function die(value, extraClass = '') {
 
 // Shows the dice tumbling, then settles on the real result:
 // each attacking die is matched with the defending die below it
-export async function animateRoll(container, pairs) {
+export async function animateRoll(container, pairs, duration = ROLL_MS) {
+  const ms = reducedMotion ? 0 : duration;
   const rows = pairs.map(() => ({ attack: die('?', 'rolling'), defend: die('?', 'rolling') }));
   container.replaceChildren(
     ...rows.map((row, i) =>
       el('div', { class: 'die-pair', title: `Die ${i + 1}` }, row.attack, el('span', { class: 'die-vs' }, 'vs'), row.defend)),
   );
 
-  if (ROLL_MS) {
+  if (ms) {
     const started = performance.now();
     await new Promise((resolve) => {
       const timer = setInterval(() => {
@@ -36,7 +37,7 @@ export async function animateRoll(container, pairs) {
           row.attack.textContent = 1 + Math.floor(Math.random() * 6);
           row.defend.textContent = 1 + Math.floor(Math.random() * 6);
         }
-        if (performance.now() - started >= ROLL_MS) {
+        if (performance.now() - started >= ms) {
           clearInterval(timer);
           resolve();
         }
