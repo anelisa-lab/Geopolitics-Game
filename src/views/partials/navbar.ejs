@@ -8,6 +8,7 @@
 <nav class="navbar">
   <a href="/" class="brand">🌍 Geopolitics Game</a>
   <ul>
+    <li><%- navLink('/how-to-play', 'How to play') %></li>
     <li><%- navLink('/games', 'Browse games') %></li>
     <% if (currentUser) { %>
       <li><%- navLink('/dashboard', 'My games') %></li>

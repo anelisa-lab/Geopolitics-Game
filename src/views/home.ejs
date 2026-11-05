@@ -1,5 +1,29 @@
 <section class="hero">
   <h1>Conquer the world, one roll at a time</h1>
-  <p>Pick a country, face 9 computer-controlled rivals, and take all 10 nations to win.</p>
-  <a href="/signup" class="btn">Start playing</a>
+  <p class="hero-lede">Pick any country on Earth, face 9 computer rivals who play to win, and take all 10 nations to claim victory.</p>
+  <div class="hero-actions">
+    <% if (currentUser) { %>
+      <a href="/games/new" class="btn">Start a new game</a>
+      <a href="/dashboard" class="btn btn-ghost">My games</a>
+    <% } else { %>
+      <a href="/signup" class="btn">Start playing, it's free</a>
+      <a href="/games" class="btn btn-ghost">Watch a game</a>
+    <% } %>
+  </div>
+  <p class="hero-small"><a href="/how-to-play">New to the game? Read how to play</a></p>
+</section>
+
+<section class="features" aria-label="What makes it different">
+  <div class="feature">
+    <h2>🎲 Every roll counts</h2>
+    <p>Armies fight die against die. A country's population sets its starting army, from Vatican City's single soldier to India's nine.</p>
+  </div>
+  <div class="feature">
+    <h2>🤖 Rivals that think</h2>
+    <p>Each computer player weighs the odds of every attack and tells you why it made each move. Fast-forward when you're impatient.</p>
+  </div>
+  <div class="feature">
+    <h2>🎙️ Live commentary</h2>
+    <p>An AI commentator calls every battle as it happens. Share your game's link and friends can watch it live.</p>
+  </div>
 </section>

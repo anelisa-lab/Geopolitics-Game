@@ -80,3 +80,25 @@ a { color: #2346c4; }
 /* Player's record (task 6.5) */
 .record { color: #5a6575; margin: 4px 0 0; }
 .record strong { color: #16202c; }
+/* ---------- Home and How to play (task 7.2) ---------- */
+.hero-lede { font-size: 19px; color: #3d4756; max-width: 620px; margin: 0 auto 24px; }
+.hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn-ghost { background: #fff; color: #2346c4 !important; box-shadow: inset 0 0 0 2px #2346c4; }
+.hero-small { margin-top: 18px; font-size: 14px; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 48px; }
+.feature { background: #fff; border: 1px solid #dde2ea; border-radius: 12px; padding: 18px 20px; }
+.feature h2 { font-size: 17px; margin: 0 0 6px; }
+.feature p { margin: 0; color: #3d4756; line-height: 1.5; }
+
+.rules { max-width: 720px; margin: 0 auto; line-height: 1.6; }
+.rules-lede { font-size: 18px; color: #3d4756; }
+.rules section { margin-top: 28px; }
+.rules h2 { font-size: 20px; margin-bottom: 6px; }
+.rules li { margin-bottom: 6px; }
+.rules-table { width: auto; min-width: 280px; border-collapse: collapse; font-size: 15px; }
+.rules-table th, .rules-table td { padding: 6px 14px; border-bottom: 1px solid #eef1f5; text-align: left; }
+.rules-table th { background: #f4f6f9; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: #5a6575; }
+.rules .table-wrap { display: inline-block; max-width: 100%; }
+.tip { background: #fff6dd; padding: 10px 14px; border-radius: 8px; }
+.example { background: #fff; border-left: 4px solid #2346c4; padding: 12px 16px; border-radius: 0 8px 8px 0; }
+.rules-cta { margin: 32px 0 48px; }

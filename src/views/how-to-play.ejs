@@ -1,0 +1,73 @@
+<article class="rules">
+  <h1>How to play</h1>
+  <p class="rules-lede">You against 9 computer-controlled countries. Conquer all 10 to win. Lose your last country and the game is over.</p>
+
+  <section>
+    <h2>1. Setting up</h2>
+    <p>Pick your country from the full list. The game then draws 9 rival countries at random and decides the turn order at random, so you may not go first.</p>
+    <p>Every country starts with an army based on its population:</p>
+    <div class="table-wrap">
+      <table class="rules-table">
+        <thead><tr><th>Population</th><th>Soldiers</th></tr></thead>
+        <tbody>
+          <tr><td>Up to 5 million</td><td>1</td></tr>
+          <tr><td>Up to 10 million</td><td>2</td></tr>
+          <tr><td>Up to 25 million</td><td>3</td></tr>
+          <tr><td>Up to 50 million</td><td>4</td></tr>
+          <tr><td>Up to 75 million</td><td>5</td></tr>
+          <tr><td>Up to 100 million</td><td>6</td></tr>
+          <tr><td>Up to 125 million</td><td>7</td></tr>
+          <tr><td>Up to 150 million</td><td>8</td></tr>
+          <tr><td>More than 150 million</td><td>9</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tip">Tip: the computer rivals play to win from the very first turn. A country with only 1 soldier can be conquered before you get to move.</p>
+  </section>
+
+  <section>
+    <h2>2. Your turn</h2>
+    <ol>
+      <li><strong>Reinforce</strong> (from round 2): you get 2 new soldiers for every country you hold, and place them on your countries with + and −.</li>
+      <li><strong>Move soldiers</strong> (optional): click one of your countries, then another of yours. At least 1 soldier must stay behind.</li>
+      <li><strong>Attack once</strong>, or <strong>end your turn</strong>: click one of your countries with 2 or more soldiers, then any enemy country. Distance doesn't matter.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>3. Battles</h2>
+    <ul>
+      <li>One soldier always stays home, so you attack with your soldiers minus 1.</li>
+      <li>The number of dice each side rolls is the smaller of the two armies: <strong>dice = the lower of (your soldiers − 1) and their soldiers</strong>.</li>
+      <li>Die 1 fights die 1, die 2 fights die 2, and so on. The higher die wins, and the lower die's soldier is defeated. <strong>A tie defeats nobody.</strong></li>
+      <li>Keep rolling until you conquer the country, you're down to 1 soldier, or you stop. <strong>Stopping ends your turn.</strong></li>
+    </ul>
+    <div class="example">
+      <strong>Example:</strong> your 10 soldiers attack a country with 2. Each side rolls 2 dice. You roll 1 and 4, they roll 2 and 3.
+      1 vs 2: they win, you lose a soldier. 4 vs 3: you win, they lose a soldier. Now it's 9 vs 1.
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Conquering</h2>
+    <p>When a country's last soldier falls, it's yours. It starts with <strong>half its population value (rounded down), but never fewer than 2 soldiers</strong>. India (value 9) gives 4; the Holy See (value 1) gives 2.</p>
+    <p>You can then move more soldiers in from the country you attacked from. You can attack from the new country from your next turn.</p>
+  </section>
+
+  <section>
+    <h2>5. Winning and losing</h2>
+    <p>A player who loses every country is out of the game. Hold all 10 countries to win; lose your last country and the game ends in defeat. Your wins and losses are kept on <a href="/dashboard">My games</a>.</p>
+  </section>
+
+  <section>
+    <h2>6. The computer players</h2>
+    <p>Each rival works out its exact chance of winning every possible attack and only attacks when the odds are good. Every decision appears in the live feed with its reason. Turn on <strong>⏩ Fast-forward</strong> to speed them up: every move is still shown, just faster.</p>
+  </section>
+
+  <section>
+    <h2>7. Watching and sharing</h2>
+    <p>Anyone with your game's link can watch it live, without an account, using <strong>🔗 Share link</strong>. Only you can make moves in your game. Browse other people's games on <a href="/games">Browse games</a>.</p>
+  </section>
+
+  <p class="rules-cta"><a href="<%= currentUser ? '/games/new' : '/signup' %>" class="btn">Start a game</a></p>
+</article>
