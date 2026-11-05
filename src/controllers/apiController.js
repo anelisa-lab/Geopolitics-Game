@@ -32,6 +32,9 @@ export async function getEvents(req, res) {
   const events = await gameService.listEvents(req.game._id, after);
   res.json({ events: events.map(toEventView) });
 }
+export async function getSummary(req, res) {
+  res.json(await gameService.summarizeGame(req.game));
+}
 
 export const reinforce = respondWith((req) => gameService.reinforce(req.game, req.validated.allocations));
 export const transfer = respondWith((req) => gameService.transfer(req.game, req.validated));

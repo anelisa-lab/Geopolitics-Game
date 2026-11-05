@@ -77,3 +77,6 @@ a { color: #2346c4; }
 /* ---------- Navigation (task 4.5) ---------- */
 .navbar a.active:not(.btn) { box-shadow: 0 2px 0 #7e9cff; padding-bottom: 2px; }
 .navbar a:focus-visible, .link-button:focus-visible { outline: 2px solid #7e9cff; outline-offset: 3px; border-radius: 4px; }
+/* Player's record (task 6.5) */
+.record { color: #5a6575; margin: 4px 0 0; }
+.record strong { color: #16202c; }

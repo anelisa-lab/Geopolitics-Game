@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  getState, getEvents, reinforce, transfer, startAttack, rollAttack, stopAttack, conquestMove, endTurn,
+ getState, getEvents, getSummary, reinforce, transfer, startAttack, rollAttack, stopAttack, conquestMove, endTurn,
 } from '../controllers/apiController.js';
 import { requireAuth } from '../middleware/auth.js';
 import { loadGame, requireOwner, requireHumanTurn } from '../middleware/gameAccess.js';
@@ -16,6 +16,7 @@ const canMove = [requireAuth, loadGame, requireOwner, requireHumanTurn];
 // Public: anyone can watch
 router.get('/games/:id/state', loadGame, getState);
 router.get('/games/:id/events', loadGame, getEvents);
+router.get('/games/:id/summary', loadGame, getSummary);
 
 // Moves: only the owner, on their turn
 router.post('/games/:id/reinforce', ...canMove, validate(reinforceSchema), reinforce);

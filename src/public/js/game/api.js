@@ -22,6 +22,7 @@ export function createApi(gameId) {
   return {
     state: () => request('/state'),
     events: (after) => request(`/events?after=${after}`),
+    summary: () => request('/summary'),
     reinforce: (allocations) => request('/reinforce', { allocations }),
     transfer: (from, to, count) => request('/transfer', { from, to, count }),
     attack: (from, to) => request('/attack', { from, to }),

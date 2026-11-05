@@ -32,6 +32,7 @@ function makeService() {
       save: async (doc) => doc,
     },
     events: { append: async (gameId, events) => { appendedEvents.push(...events); return events; } },
+    users: { recordResult: async () => {} }, // a game can end before the human's first turn    
   });
   return { service, appendedEvents, setup: () => createdWith };
 }

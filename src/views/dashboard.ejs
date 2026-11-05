@@ -3,6 +3,10 @@
     <h1>My games</h1>
     <a href="/games/new" class="btn">+ New game</a>
   </div>
+    <p class="record">
+    Your record: <strong><%= record.gamesPlayed %></strong> finished ·
+    <strong><%= record.wins %></strong> won · <strong><%= record.losses %></strong> lost
+  </p>
 
   <%- include('partials/gameFilters') %>
 

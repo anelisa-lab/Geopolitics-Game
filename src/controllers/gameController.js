@@ -58,8 +58,11 @@ function listLocals(basePath, query, result) {
 
 export async function showDashboard(req, res) {
   const query = gameListQuerySchema.parse(req.query);
-  const result = await gameService.listMyGames(req.session.user.id, query);
-  res.render('dashboard', { title: 'My games', ...listLocals('/dashboard', query, result) });
+    const [result, record] = await Promise.all([
+    gameService.listMyGames(req.session.user.id, query),
+    gameService.playerRecord(req.session.user.id),
+  ]);
+  res.render('dashboard', { title: 'My games', record, ...listLocals('/dashboard', query, result) });
 }
 
 export async function showBrowse(req, res) {

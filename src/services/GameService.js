@@ -3,6 +3,7 @@ import { gameRepository } from '../repositories/GameRepository.js';
 import { gameEventRepository } from '../repositories/GameEventRepository.js';
 import { userRepository } from '../repositories/UserRepository.js';
 import { buildGameSummary } from './gameView.js';
+import { summarizeBattles } from './gameStats.js';
 import { npcTurnRunner } from './NpcTurnRunner.js';
 import { commentaryService } from '../ai/CommentaryService.js';
 import { notifyGameUpdated } from '../sockets/gameSocket.js';
@@ -136,6 +137,26 @@ export class GameService {
     return this.#events.listAfter(gameId, afterSeq);
   }
 
+  // ---------- Results ----------
+
+  // How the player did in this game: shown on the Victory / Defeated banner
+  async summarizeGame(gameDoc) {
+    const humanId = gameDoc.players.find((player) => player.type === 'human').playerId;
+    const events = await this.#events.findForPlayer(gameDoc._id, humanId, ['ATTACK_START', 'CONQUEST', 'DICE_ROLL']);
+    return {
+      status: gameDoc.status,
+      rounds: gameDoc.round,
+      countriesHeld: gameDoc.territories.filter((t) => t.ownerPlayerId === humanId).length,
+      ...summarizeBattles(events),
+    };
+  }
+
+  // Wins and losses across all the player's finished games
+  async playerRecord(userId) {
+    const user = await this.#users.findById(userId);
+    return user?.stats ?? { gamesPlayed: 0, wins: 0, losses: 0 };
+  }
+
   // ---------- Lists ----------
 
   async listMyGames(userId, query) {
@@ -159,6 +180,7 @@ export class GameService {
   // then save the new board and its events. If a rule is broken, the engine
   // throws before anything is saved.
   async #play(gameDoc, action) {
+    const wasActive = gameDoc.status === 'active';
     const game = Game.fromDocument(gameDoc, this.#engine);
     const humanId = gameDoc.players.find((player) => player.type === 'human').playerId;
 
@@ -174,6 +196,10 @@ export class GameService {
     gameDoc.set(game.toDocument());
     await this.#games.save(gameDoc);
     await this.#events.append(gameDoc._id, events);
+
+    // The game has just ended: add it to the player's record (exactly once, as a finished
+    // game can't be played any further)
+    if (wasActive && game.isOver) await this.#users.recordResult(gameDoc.ownerId, game.status);
     // Everyone watching this game hears about the new moves straight away
     this.#notify?.(gameDoc._id.toString(), events.at(-1).seq);
     return events;

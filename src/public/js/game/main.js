@@ -5,8 +5,10 @@ import { versus, animateRoll, rollSummary } from './battle.js';
 import { applyEvent } from './replay.js';
 import { winChance } from './odds.js';
 import { toast } from './toast.js';
+import { celebrate } from './celebrate.js';
 
 const POLL_MS = 15000; // a backup check, in case the live connection drops
+const HISTORY_SIZE = 150; // how many past events the feed shows when the page opens
 const PHASE_LABELS = {
   REINFORCE: 'Placing reinforcements',
   PLANNING: 'Planning',
@@ -51,6 +53,8 @@ class GameScreen {
   #allocations = new Map();  // reinforcements placed but not yet confirmed
     #gameId;
   #updateWaiting = false;    // news arrived while the screen was busy: check again when it's free
+  #summary = null;           // the game-over stats
+  #summaryRequested = false;
 
   constructor(root, initialState) {
     this.#api = createApi(root.dataset.gameId);
@@ -91,10 +95,11 @@ class GameScreen {
   async start() {
     this.#render();
     try {
-      // The history so far goes straight into the feed (no need to replay it)
-      const { events } = await this.#api.events(0);
+           // Event numbers have no gaps, so "after eventSeq - 150" means "the last 150"
+      const latest = this.#state.eventSeq ?? 0;
+      const { events } = await this.#api.events(Math.max(0, latest - HISTORY_SIZE));
       this.#feed.add(events, this.#view);
-      if (events.length) this.#lastSeq = Math.max(...events.map((event) => event.seq));
+      this.#lastSeq = Math.max(latest, ...events.map((event) => event.seq));
     } catch {
       toast('The game history could not be loaded. Refresh to try again.', 'error');
     }
@@ -142,8 +147,10 @@ class GameScreen {
   }
 
   // New board from the server, plus the moves that led to it. The moves are played back in order
-  #apply(state, events = []) {
+    #apply(state, events = []) {
+    const justWon = this.#state.status === 'active' && state.status === 'won';
     this.#state = state;
+    if (justWon) celebrate();
     if (state.phase !== 'REINFORCE') this.#allocations.clear();
     if (state.phase !== 'PLANNING' || !state.isHumanTurn) this.#selected = null;
 
@@ -356,25 +363,22 @@ class GameScreen {
     );
   }
 
-  #renderBanner() {
+    #renderBanner() {
     const v = this.#view;
     const banner = this.#els.banner;
     banner.className = 'game-banner';
 
-    if (v.status === 'won') {
-      banner.classList.add('banner-won');
+    if (v.status === 'won' || v.status === 'lost') {
+      const won = v.status === 'won';
+      banner.classList.add(won ? 'banner-won' : 'banner-lost');
+      const headline = won
+        ? [el('strong', {}, '🏆 Victory!'), ` ${v.isOwner ? 'You' : 'The player'} conquered all 10 countries in ${plural(v.round, 'round')}.`]
+        : [el('strong', {}, 'Defeated.'), ` ${v.isOwner ? 'Your' : "The player's"} last country fell in round ${v.round}.`];
       banner.replaceChildren(
-        el('strong', {}, '🏆 Victory!'),
-        ` ${v.isOwner ? 'You' : 'The player'} conquered all 10 countries in ${plural(v.round, 'round')}.`,
-        v.isOwner ? el('a', { href: '/games/new', class: 'btn btn-small' }, 'Play again') : null,
+        el('div', { class: 'banner-text' }, ...headline, this.#statsList()),
+        v.isOwner ? el('a', { href: '/games/new', class: 'btn btn-small' }, won ? 'Play again' : 'Try again') : null,
       );
-    } else if (v.status === 'lost') {
-      banner.classList.add('banner-lost');
-      banner.replaceChildren(
-        el('strong', {}, 'Defeated.'),
-        ` ${v.isOwner ? 'Your' : "The player's"} last country has fallen.`,
-        v.isOwner ? el('a', { href: '/games/new', class: 'btn btn-small' }, 'Try again') : null,
-      );
+      this.#loadSummary();
     } else if (!v.isOwner) {
       banner.classList.add('banner-watch');
       banner.replaceChildren(
@@ -387,6 +391,32 @@ class GameScreen {
       return;
     }
     banner.hidden = false;
+  }
+
+  // The player's battle record for this game, shown once it's over
+  #statsList() {
+    const s = this.#summary;
+    if (!s) return null;
+    const stat = (value, label) => el('li', {}, el('strong', {}, String(value)), ` ${label}`);
+    return el('ul', { class: 'game-stats' },
+      stat(s.attacks, s.attacks === 1 ? 'attack' : 'attacks'),
+      stat(s.conquests, s.conquests === 1 ? 'country conquered' : 'countries conquered'),
+      stat(s.rolls, s.rolls === 1 ? 'dice roll' : 'dice rolls'),
+      stat(s.enemiesDefeated, s.enemiesDefeated === 1 ? 'enemy soldier defeated' : 'enemy soldiers defeated'),
+      stat(s.soldiersLost, s.soldiersLost === 1 ? 'soldier lost attacking' : 'soldiers lost attacking'));
+  }
+
+  #loadSummary() {
+    if (this.#summaryRequested) return;
+    this.#summaryRequested = true;
+    this.#api.summary()
+      .then((summary) => {
+        this.#summary = summary;
+        this.#render();
+      })
+      .catch(() => {
+        // the banner still works without the numbers
+      });
   }
 
   #renderPlayers() {

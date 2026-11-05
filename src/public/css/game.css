@@ -143,6 +143,13 @@ button.country-card:disabled { opacity: 0.6; }
 
 /* Live spectating badge (Day 6) */
 .live-badge { align-self: center; font-size: 13px; font-weight: 700; color: #a32626; background: #fdecec; border-radius: 999px; padding: 4px 10px; }
+/* Game over (Day 6) */
+.banner-text { flex: 1 1 320px; }
+.game-stats { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 0; padding: 0; font-size: 14px; }
+.game-stats strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 30; }
+.confetti i { position: absolute; top: -14px; width: 8px; height: 14px; border-radius: 2px; animation-name: confetti-fall; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes confetti-fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0.7; } }
 /* Toasts */
 .toasts { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; z-index: 20; }
 .toast { background: #16202c; color: #fff; padding: 10px 14px; border-radius: 10px; max-width: 360px; font-size: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); }

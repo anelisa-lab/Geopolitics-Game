@@ -18,6 +18,13 @@ export class UserRepository {
   async findById(id) {
     return User.findById(id).select('-passwordHash').lean();
   }
+    // Adds a finished game to the player's record. $inc changes the numbers in one step inside
+  // the database, so two games finishing at the same moment can't overwrite each other
+  async recordResult(userId, result) {
+    const outcome = result === 'won' ? 'stats.wins' : 'stats.losses';
+    await User.updateOne({ _id: userId }, { $inc: { 'stats.gamesPlayed': 1, [outcome]: 1 } });
+  }
+
     // Returns a Map of userId → username for many users in one query
   async findUsernamesByIds(ids) {
     const users = await User.find({ _id: { $in: ids } }).select('username').lean();
