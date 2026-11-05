@@ -8,6 +8,7 @@
       <div class="game-meta" id="game-meta">Round <%= game.round %> · <%= game.statusLabel %></div>
     </div>
     <div class="top-buttons">
+            <span id="live-badge" class="live-badge" hidden></span>
       <button type="button" id="ff-btn" class="btn btn-secondary ff-btn" aria-pressed="false" title="Speeds up the other players' moves. Every move is still shown.">⏩ Fast-forward: off</button>
       <button type="button" id="share-btn" class="btn btn-secondary">🔗 Share link</button>
     </div>
@@ -55,4 +56,5 @@
 <noscript><p class="banner">Turn on JavaScript to play. You can still see the board above.</p></noscript>
 
 <script type="application/json" id="initial-state"><%- initialStateJson %></script>
+<script src="/socket.io/socket.io.js"></script>
 <script type="module" src="/js/game/main.js"></script>

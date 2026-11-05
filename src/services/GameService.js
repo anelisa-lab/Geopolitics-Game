@@ -5,6 +5,7 @@ import { userRepository } from '../repositories/UserRepository.js';
 import { buildGameSummary } from './gameView.js';
 import { npcTurnRunner } from './NpcTurnRunner.js';
 import { commentaryService } from '../ai/CommentaryService.js';
+import { notifyGameUpdated } from '../sockets/gameSocket.js';
 import { Game } from '../domain/Game.js';
 import { BattleEngine } from '../domain/BattleEngine.js';
 import { shuffle } from '../domain/random.js';
@@ -24,6 +25,7 @@ export class GameService {
   #engine;
   #npcs;
   #commentary;
+    #notify;
 
   constructor({
     countries = countryRepository,
@@ -33,6 +35,7 @@ export class GameService {
     engine = new BattleEngine(),
     npcs = npcTurnRunner,
     commentary = null, // tests leave this out, so they never call the real AI
+        notify = null,     // tells watchers about new moves (live spectating)
   } = {}) {
     this.#countries = countries;
     this.#games = games;
@@ -41,6 +44,7 @@ export class GameService {
     this.#engine = engine;
     this.#npcs = npcs;
     this.#commentary = commentary;
+        this.#notify = notify;
   }
 
   async listCountries() {
@@ -170,8 +174,10 @@ export class GameService {
     gameDoc.set(game.toDocument());
     await this.#games.save(gameDoc);
     await this.#events.append(gameDoc._id, events);
+    // Everyone watching this game hears about the new moves straight away
+    this.#notify?.(gameDoc._id.toString(), events.at(-1).seq);
     return events;
   }
 }
 
-export const gameService = new GameService({ commentary: commentaryService });
+export const gameService = new GameService({ commentary: commentaryService, notify: notifyGameUpdated });

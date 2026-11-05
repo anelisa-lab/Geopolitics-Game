@@ -6,8 +6,7 @@ import { applyEvent } from './replay.js';
 import { winChance } from './odds.js';
 import { toast } from './toast.js';
 
-const POLL_MS = 4000; // how often watchers check for new moves (Day 6 makes this instant)
-
+const POLL_MS = 15000; // a backup check, in case the live connection drops
 const PHASE_LABELS = {
   REINFORCE: 'Placing reinforcements',
   PLANNING: 'Planning',
@@ -50,9 +49,12 @@ class GameScreen {
   #wake = null;              // ends the current pause early when fast-forward is switched on
   #selected = null;          // the player's country chosen to attack or move from
   #allocations = new Map();  // reinforcements placed but not yet confirmed
+    #gameId;
+  #updateWaiting = false;    // news arrived while the screen was busy: check again when it's free
 
   constructor(root, initialState) {
     this.#api = createApi(root.dataset.gameId);
+        this.#gameId = root.dataset.gameId;
     this.#state = initialState;
     this.#view = structuredClone(initialState);
     this.#feed = new Feed(document.getElementById('feed'));
@@ -68,6 +70,7 @@ class GameScreen {
       arenaTurn: document.getElementById('arena-turn'),
       arenaThought: document.getElementById('arena-thought'),
       arenaFight: document.getElementById('arena-fight'),
+            live: document.getElementById('live-badge'),
     };
 
     try {
@@ -96,6 +99,7 @@ class GameScreen {
       toast('The game history could not be loaded. Refresh to try again.', 'error');
     }
     this.#resume();
+        this.#connectLive();
     setInterval(() => this.#poll(), POLL_MS);
   }
 
@@ -133,6 +137,7 @@ class GameScreen {
     } finally {
       this.#busy = false;
       this.#render();
+            this.#checkWaiting();
     }
   }
 
@@ -173,6 +178,7 @@ class GameScreen {
     this.#playing = false;
     this.#els.arena.hidden = true;
     this.#render();
+        this.#checkWaiting();
     if (othersMoved && this.#state.isOwner && this.#state.isHumanTurn) toast('Your turn!');
   }
 
@@ -218,7 +224,10 @@ class GameScreen {
 
   // Watchers (and other tabs) pick up new moves every few seconds
   async #poll() {
-    if (this.#busy || this.#playing || document.hidden || this.#dialog.open) return;
+        if (this.#busy || this.#playing || document.hidden || this.#dialog.open) {
+      this.#updateWaiting = true; // check again as soon as the screen is free
+      return;
+    }
     try {
       const { events } = await this.#api.events(this.#lastSeq);
       if (!events.length) return;
@@ -226,6 +235,28 @@ class GameScreen {
     } catch {
       // try again next time
     }
+  }
+    // ---------- Live spectating (bonus feature) ----------
+
+  // The server tells everyone watching this game the moment a move is saved
+  #connectLive() {
+    if (typeof window.io !== 'function') return; // no live connection: the backup check still works
+    const socket = window.io();
+    const badge = this.#els.live;
+
+    socket.on('connect', () => socket.emit('watch', this.#gameId)); // also runs again after a reconnect
+    socket.on('game:updated', () => this.#poll());
+    socket.on('viewers', (count) => {
+      badge.textContent = `🔴 LIVE · ${plural(count, 'viewer')}`;
+      badge.hidden = false;
+    });
+    socket.on('disconnect', () => { badge.hidden = true; });
+  }
+
+  #checkWaiting() {
+    if (!this.#updateWaiting) return;
+    this.#updateWaiting = false;
+    this.#poll();
   }
 
   // Coming back to a game in the middle of a battle carries on where it left off
@@ -716,6 +747,7 @@ class GameScreen {
   #closeDialog() {
     if (this.#dialog.open) this.#dialog.close();
     this.#render();
+        this.#checkWaiting();
   }
 }
 

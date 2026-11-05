@@ -1,5 +1,8 @@
+import http from 'node:http';
+import { Server } from 'socket.io';
 import { env } from './config/env.js';
 import { connectDB, disconnectDB } from './config/db.js';
+import { setupGameSockets } from './sockets/gameSocket.js';
 import app from './app.js';
 
 // Shows which database server we're connecting to, without the password
@@ -22,7 +25,11 @@ async function start() {
     process.exit(1);
   }
 
-  const server = app.listen(env.port, () => {
+  // One server handles both normal web requests and the live (Socket.IO) connections
+  const server = http.createServer(app);
+  setupGameSockets(new Server(server));
+
+  server.listen(env.port, () => {
     console.log(`Server running at http://localhost:${env.port}`);
   });
 
