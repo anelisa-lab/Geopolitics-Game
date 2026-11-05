@@ -10,7 +10,17 @@ import gameRoutes from './routes/gameRoutes.js';
 import apiRoutes from './routes/apiRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
+import { requireSameOrigin, requireJsonBody } from './middleware/security.js';
+import { apiLimiter } from './middleware/rateLimits.js';
+
 const app = express();
+
+// Every page (error pages included) can rely on these, even if a request is stopped early
+app.use((req, res, next) => {
+  res.locals.currentUser = null;
+  res.locals.currentPath = req.path;
+  next();
+});
 
 // Render sits in front of the app as a proxy; this makes secure cookies work there
 app.set('trust proxy', 1);
@@ -29,8 +39,9 @@ app.use(helmet({
     },
   },
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10kb' }));                         // no huge request bodies
+app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+app.use(requireSameOrigin);                                       // no requests from other websites
 app.use(express.static(path.join(import.meta.dirname, 'public')));
 app.use(sessionMiddleware);
 
@@ -53,7 +64,7 @@ app.get('/health', (req, res) => {
 app.use(authRoutes);
 app.use(pageRoutes);
 app.use(gameRoutes);
-app.use('/api', apiRoutes);
+app.use('/api', apiLimiter, requireJsonBody, apiRoutes);
 
 // Error handling (must stay at the bottom)
 app.use(notFound);

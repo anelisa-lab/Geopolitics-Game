@@ -15,6 +15,12 @@ export function errorHandler(err, req, res, next) {
   }
 
   // A request body that isn't valid JSON
+
+  // A request body over the 10 KB limit
+  if (err.type === 'entity.too.large') {
+    status = 413;
+    message = 'That request is too big.';
+  }
   if (err.type === 'entity.parse.failed') {
     status = 400;
     message = 'The request was not valid JSON.';

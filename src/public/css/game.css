@@ -140,6 +140,9 @@ button.country-card:disabled { opacity: 0.6; }
 .commentary { font-style: italic; color: #3d4756; text-align: center; margin: 8px 0 0; }
 .commentary:empty { display: none; }
 .arena .commentary { text-align: left; }
+
+/* Live spectating badge (Day 6) */
+.live-badge { align-self: center; font-size: 13px; font-weight: 700; color: #a32626; background: #fdecec; border-radius: 999px; padding: 4px 10px; }
 /* Toasts */
 .toasts { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; z-index: 20; }
 .toast { background: #16202c; color: #fff; padding: 10px 14px; border-radius: 10px; max-width: 360px; font-size: 14px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); }
