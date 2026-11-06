@@ -17,5 +17,5 @@ export const env = {
   // AI commentary. Optional: without a key, the game uses ready-made commentary lines
   llmApiKey: process.env.LLM_API_KEY || '',
   llmBaseUrl: process.env.LLM_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai',
-  llmModel: process.env.LLM_MODEL || 'gemini-2.5-flash-lite',
+   llmModel: process.env.LLM_MODEL || 'gemini-3.5-flash-lite',
 };
