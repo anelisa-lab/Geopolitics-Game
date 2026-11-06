@@ -10,6 +10,7 @@
   <ul>
     <li><%- navLink('/how-to-play', 'How to play') %></li>
     <li><%- navLink('/games', 'Browse games') %></li>
+    <li><button type="button" id="settings-btn" class="link-button" aria-haspopup="dialog">⚙️ Settings</button></li>
     <% if (currentUser) { %>
       <li><%- navLink('/dashboard', 'My games') %></li>
       <li><%- navLink('/games/new', 'New game') %></li>

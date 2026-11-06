@@ -146,3 +146,15 @@ h1, h2, h3, .brand, .card-soldiers, .side-soldiers, .game-stats strong, .chip-tu
 .difficulty-tag { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: #eef1f5; color: #3d4756; }
 .difficulty-easy { background: #e3f5ec; color: #135c39; }
 .difficulty-hard { background: #fdecec; color: #8a1f1f; }
+
+/* ---------- Settings window (Day 7) ---------- */
+.settings-dialog { border: none; border-radius: 16px; padding: 24px; width: min(420px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); border-top: 6px solid #2346c4; }
+.settings-dialog::backdrop { background: rgba(10, 15, 22, 0.55); }
+.settings-dialog h2 { margin: 0 0 12px; }
+.settings-dialog fieldset { border: none; padding: 0; margin: 0 0 16px; display: grid; gap: 6px; }
+.settings-dialog legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+.settings-choice { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.settings-choice:hover { background: rgba(35, 70, 196, 0.08); }
+.settings-note { font-size: 13px; color: #5a6575; margin: 0; }
+.settings-dialog .dialog-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.settings-dialog .btn { border: none; cursor: pointer; font-size: 15px; font-family: inherit; }

@@ -1,0 +1,21 @@
+<dialog id="settings-dialog" class="settings-dialog" aria-labelledby="settings-title">
+  <form method="dialog">
+    <h2 id="settings-title">⚙️ Settings</h2>
+
+    <fieldset>
+      <legend>Theme</legend>
+      <label class="settings-choice"><input type="radio" name="theme" value="light"> ☀️ Light</label>
+      <label class="settings-choice"><input type="radio" name="theme" value="dark"> 🌙 Dark</label>
+      <label class="settings-choice"><input type="radio" name="theme" value="system"> 💻 Match my device</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Game</legend>
+      <label class="settings-choice"><input type="checkbox" name="sound"> 🔊 Sound effects</label>
+      <label class="settings-choice"><input type="checkbox" name="fastForward"> ⏩ Fast-forward the other players' turns</label>
+    </fieldset>
+
+    <p class="settings-note">Settings are saved in this browser and apply straight away.</p>
+    <div class="dialog-actions"><button class="btn" value="done">Done</button></div>
+  </form>
+</dialog>

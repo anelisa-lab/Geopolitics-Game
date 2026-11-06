@@ -93,6 +93,14 @@ class GameScreen {
     this.#els.fastForward.addEventListener('click', () => this.#toggleFastForward());
     this.#els.sound.addEventListener('click', () => this.#toggleSound());
 
+    // The ⚙️ Settings window can change sound and fast-forward while the game is open
+    window.addEventListener('settings-changed', (event) => {
+      this.#fast = event.detail.fastForward;
+      sound.setMuted(!event.detail.sound);
+      if (this.#fast) this.#wake?.();
+      this.#render();
+    });
+
     // Escape mustn't close the window in the middle of a battle or conquest
     this.#dialog.addEventListener('cancel', (event) => {
       if (['ATTACKING', 'CONQUEST_MOVE'].includes(this.#state.phase)) event.preventDefault();

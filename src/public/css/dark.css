@@ -1,0 +1,78 @@
+/* ---------- Dark mode (Day 7) ----------
+   Used when the ⚙️ Settings theme is Dark, or "Match my device" on a device in dark mode.
+   Every rule starts with :root[data-theme="dark"], so it only applies then, and wins over the light styles. */
+:root[data-theme="dark"] { color-scheme: dark; }
+
+/* Page, text and links */
+:root[data-theme="dark"] body {
+  background-color: #0e131b;
+  background-image: radial-gradient(#1f2836 1px, transparent 1.3px);
+  color: #e6ebf2;
+}
+:root[data-theme="dark"] a { color: #8fa8ff; }
+:root[data-theme="dark"] .navbar a:not(.btn) { color: #fff; } /* the navbar was already dark: keep its links white */
+:root[data-theme="dark"] .hero h1 { background-image: linear-gradient(90deg, #e6ebf2 10%, #8fa8ff 55%, #ff8a80 95%); }
+:root[data-theme="dark"] :is(.hero-lede, .feature p, .rules-lede, .record, .eyebrow, .country-meta, .no-results, .form-card small,
+  .difficulty-option small, .card-owner, .player-stats, .player .you, .feed-round, .feed-commentary, .dialog-hint, .side-label,
+  .die-vs, .vs, .settings-note, .slider-value, .game-meta, .territory small, .turn-order small) { color: #9aa6b6; }
+:root[data-theme="dark"] .record strong { color: #e6ebf2; }
+
+/* Surfaces: cards, panels, windows, tables, inputs */
+:root[data-theme="dark"] :is(.form-card, .feature, .panel, .arena, .table-wrap, .empty, .game-dialog, .settings-dialog,
+  .example, .territory, .chip, .difficulty-option, .country-list) {
+  background: #161d28;
+  border-color: #2a3546;
+  color: #e6ebf2;
+}
+:root[data-theme="dark"] :is(.filters input, .filters select, .form-card input, .step) {
+  background: #1d2633;
+  border-color: #3a4659;
+  color: #e6ebf2;
+}
+:root[data-theme="dark"] :is(.games-table th, .rules-table th, .side) { background: #1d2633; color: #9aa6b6; }
+:root[data-theme="dark"] .side { color: #e6ebf2; }
+:root[data-theme="dark"] :is(.games-table th, .games-table td, .rules-table th, .rules-table td, .feed-item, .country-option) { border-color: #263042; }
+:root[data-theme="dark"] :is(.country-option:hover, .player.current) { background: #1f2b4d; }
+:root[data-theme="dark"] :is(.country-option:has(input:checked), .difficulty-option:has(input:checked)) { background: #1f2b4d; border-color: #8fa8ff; }
+
+/* Buttons */
+:root[data-theme="dark"] .btn-secondary { background: #263042; color: #e6ebf2 !important; }
+:root[data-theme="dark"] .btn-ghost { background: #161d28; color: #8fa8ff !important; box-shadow: inset 0 0 0 2px #8fa8ff; }
+
+/* Status colours */
+:root[data-theme="dark"] .badge-active { background: #1f2b4d; color: #9db2ff; }
+:root[data-theme="dark"] :is(.badge-won, .difficulty-easy) { background: #15392a; color: #7ee0ad; }
+:root[data-theme="dark"] :is(.badge-lost, .difficulty-hard, .form-error, .live-badge) { background: #3d1c1c; color: #ff9b9b; }
+:root[data-theme="dark"] .difficulty-tag:not(.difficulty-easy):not(.difficulty-hard) { background: #263042; color: #c9d2de; }
+:root[data-theme="dark"] :is(.banner, .banner-watch, .tip) { background: #3a3216; color: #f5e6b0; }
+:root[data-theme="dark"] .banner-won { background: #15392a; color: #a9ecc8; }
+:root[data-theme="dark"] .banner-lost { background: #3d1c1c; color: #ffb3b3; }
+
+/* Board */
+:root[data-theme="dark"] .country-card {
+  background: color-mix(in srgb, var(--owner) 16%, #161d28);
+  border-color: color-mix(in srgb, var(--owner) 40%, #2a3546);
+  color: #e6ebf2;
+}
+:root[data-theme="dark"] .country-card.mine { background: color-mix(in srgb, var(--owner) 26%, #161d28); }
+:root[data-theme="dark"] .card-soldiers { color: color-mix(in srgb, var(--owner) 35%, #ffffff); }
+:root[data-theme="dark"] .card-extra { color: #7ee0ad; }
+:root[data-theme="dark"] .card-hint { color: #8fa8ff; }
+:root[data-theme="dark"] .attack-target .card-hint { color: #ff8a80; }
+:root[data-theme="dark"] .country-card.selected { outline-color: #8fa8ff; }
+
+/* Feed, commentary and outcomes */
+:root[data-theme="dark"] .feed-attack .feed-text { color: #ff8a80; }
+:root[data-theme="dark"] .feed-conquest .feed-text, :root[data-theme="dark"] .outcome-win { color: #7ee0ad; }
+:root[data-theme="dark"] .feed-elimination .feed-text, :root[data-theme="dark"] .outcome-lose { color: #ff9b9b; }
+:root[data-theme="dark"] :is(.feed-npc .feed-text, .arena-thought, .commentary) { color: #c9d2de; }
+
+/* Dice */
+:root[data-theme="dark"] .die { background: #1d2633; border-color: #3a4659; color: #e6ebf2; }
+:root[data-theme="dark"] .die.win { background: #15392a; border-color: #2fb06f; color: #a9ecc8; }
+:root[data-theme="dark"] .die.lose { background: #3d1c1c; border-color: #e05a52; color: #ffb3b3; }
+:root[data-theme="dark"] .die.tie { background: #263042; border-color: #5a6575; color: #c9d2de; }
+
+/* Toasts */
+:root[data-theme="dark"] .toast { background: #263042; }
+:root[data-theme="dark"] .toast-error { background: #a32626; }
