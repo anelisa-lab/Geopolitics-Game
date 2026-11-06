@@ -47,7 +47,8 @@ Built for the **INF4001N Entrance Exam 2027** (Department of Information Systems
 - **New game:** search all 234 countries (population data from Worldometers); the game picks 9 random rivals and a random turn order.
 - **A full game engine** following the brief's rules: reinforcements, transfers, one attack per turn, dice battles, conquest bonuses, elimination, and winning or losing.
 - **A clickable board:** choose a country, then attack an enemy or move soldiers to another of your countries, with an estimated chance of winning before you commit.
-- **Animated battles:** a battle window with dice that tumble and then show who won each pair.
+- **Animated battles:** a battle window with dice that tumble, then land showing their dots, with who won each pair. Countries flash in their new owner's colour when they change hands.
+- **Sound effects** for rolls, conquests, losing a country, your turn, victory and defeat, made in the browser with the Web Audio API (no audio files), with a mute button that's remembered.
 - **NPCs that play to win:** each rival calculates the exact odds of every possible attack and explains every decision in the live feed.
 - **Move-by-move playback** of the other players' turns, with **⏩ Fast-forward** that speeds it up while still showing every move.
 - **AI battle commentary** on every dice roll (Google Gemini), with ready-made lines if the AI is unavailable.

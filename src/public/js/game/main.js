@@ -6,6 +6,7 @@ import { applyEvent } from './replay.js';
 import { winChance } from './odds.js';
 import { toast } from './toast.js';
 import { celebrate } from './celebrate.js';
+import * as sound from './sound.js';
 
 const POLL_MS = 15000; // a backup check, in case the live connection drops
 const HISTORY_SIZE = 150; // how many past events the feed shows when the page opens
@@ -79,6 +80,7 @@ class GameScreen {
       arenaThought: document.getElementById('arena-thought'),
       arenaFight: document.getElementById('arena-fight'),
       live: document.getElementById('live-badge'),
+      sound: document.getElementById('sound-btn'),
     };
 
     try {
@@ -89,6 +91,7 @@ class GameScreen {
 
     document.getElementById('share-btn').addEventListener('click', () => this.#share());
     this.#els.fastForward.addEventListener('click', () => this.#toggleFastForward());
+    this.#els.sound.addEventListener('click', () => this.#toggleSound());
 
     // Escape mustn't close the window in the middle of a battle or conquest
     this.#dialog.addEventListener('cancel', (event) => {
@@ -154,8 +157,13 @@ class GameScreen {
   // New board from the server, plus the moves that led to it. The moves are played back in order
   #apply(state, events = []) {
     const justWon = this.#state.status === 'active' && state.status === 'won';
+    const justLost = this.#state.status === 'active' && state.status === 'lost';
     this.#state = state;
-    if (justWon) celebrate();
+    if (justWon) {
+      celebrate();
+      sound.play('victory');
+    }
+    if (justLost && state.isOwner) sound.play('defeat');
     if (state.phase !== 'REINFORCE') this.#allocations.clear();
     if (state.phase !== 'PLANNING' || !state.isHumanTurn) this.#selected = null;
 
@@ -191,7 +199,10 @@ class GameScreen {
     this.#els.arena.hidden = true;
     this.#render();
     this.#checkWaiting();
-    if (othersMoved && this.#state.isOwner && this.#state.isHumanTurn) toast('Your turn!');
+    if (othersMoved && this.#state.isOwner && this.#state.isHumanTurn) {
+      toast('Your turn!');
+      sound.play('turn');
+    }
   }
 
   // The player's own moves were already shown in the battle window, so they aren't replayed
@@ -221,6 +232,12 @@ class GameScreen {
       // not remembered next time, but still works now
     }
     if (this.#fast) this.#wake?.(); // skip the rest of the current pause
+    this.#render();
+  }
+
+  #toggleSound() {
+    sound.setMuted(!sound.isMuted());
+    if (!sound.isMuted()) sound.play('tie'); // a little beep, so you know it's on
     this.#render();
   }
 
@@ -322,6 +339,7 @@ class GameScreen {
         if (!dice) break;
         const from = territory(p.from);
         const to = territory(p.to);
+        if (!this.#fast) sound.play('roll', 0.5);
         // Show the numbers and words once the dice have landed, so they always match
         animateRoll(dice, p.pairs, this.#fast ? 60 : 350).then(() => {
           if (!dice.isConnected) return; // the arena has already moved on to the next move
@@ -334,6 +352,9 @@ class GameScreen {
       }
       case 'CONQUEST':
         if (summary()) summary().textContent = `🏳️ ${territory(p.to).name} falls to ${player.name}!`;
+        // Losing one of your own countries gets its own warning sound
+        if (v.isOwner && p.defenderPlayerId === v.humanPlayerId) sound.play('lostCountry');
+        else if (!this.#fast) sound.play('conquest', 0.4);
         break;
       case 'ATTACK_FAILED':
         if (summary()) summary().textContent = `${territory(p.from).name} is down to its last soldier. The attack fails.`;
@@ -343,6 +364,7 @@ class GameScreen {
         break;
       case 'ELIMINATION': {
         const out = v.players.find((pl) => pl.playerId === p.playerId);
+        if (!this.#fast) sound.play('elimination', 0.6);
         arenaThought.textContent = `☠️ ${out.isHuman && v.isOwner ? 'You have' : `${out.name} has`} been eliminated.`;
         break;
       }
@@ -361,6 +383,8 @@ class GameScreen {
     this.#renderBoard();
     this.#els.fastForward.setAttribute('aria-pressed', String(this.#fast));
     this.#els.fastForward.textContent = this.#fast ? '⏩ Fast-forward: on' : '⏩ Fast-forward: off';
+    this.#els.sound.setAttribute('aria-pressed', String(!sound.isMuted()));
+    this.#els.sound.textContent = sound.isMuted() ? '🔇 Sound: off' : '🔊 Sound: on';
   }
 
   #renderMeta() {
@@ -721,7 +745,9 @@ class GameScreen {
     // Animate in the open dialog, using the numbers from the roll itself
     const dice = this.#dialog.querySelector('.dice');
     if (roll && dice) {
+      sound.play('roll');
       await animateRoll(dice, roll.pairs);
+      sound.play(conquest ? 'conquest' : sound.rollResult(roll));
       this.#dialog.querySelector('[data-role="attacker"]').textContent = roll.attackerSoldiers;
       this.#dialog.querySelector('[data-role="defender"]').textContent = roll.defenderSoldiers;
       this.#dialog.querySelector('.roll-summary').textContent = rollSummary(roll, fromBefore, toBefore);
