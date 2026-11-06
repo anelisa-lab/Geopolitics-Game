@@ -311,14 +311,21 @@ class GameScreen {
                     el('p', { class: 'commentary' }),
         );
         break;
-      case 'DICE_ROLL':
-        if (!arenaFight.querySelector('.dice')) break;
-        animateRoll(arenaFight.querySelector('.dice'), p.pairs, this.#fast ? 60 : 350);
-        arenaFight.querySelector('[data-role="attacker"]').textContent = p.attackerSoldiers;
-        arenaFight.querySelector('[data-role="defender"]').textContent = p.defenderSoldiers;
-        summary().textContent = rollSummary(p, territory(p.from), territory(p.to));
-                arenaFight.querySelector('.commentary').textContent = event.commentary ? `🎙️ ${event.commentary}` : '';
+       case 'DICE_ROLL': {
+        const dice = arenaFight.querySelector('.dice');
+        if (!dice) break;
+        const from = territory(p.from);
+        const to = territory(p.to);
+        // Show the numbers and words once the dice have landed, so they always match
+        animateRoll(dice, p.pairs, this.#fast ? 60 : 350).then(() => {
+          if (!dice.isConnected) return; // the arena has already moved on to the next move
+          arenaFight.querySelector('[data-role="attacker"]').textContent = p.attackerSoldiers;
+          arenaFight.querySelector('[data-role="defender"]').textContent = p.defenderSoldiers;
+          summary().textContent = rollSummary(p, from, to);
+          arenaFight.querySelector('.commentary').textContent = event.commentary ? `🎙️ ${event.commentary}` : '';
+        });
         break;
+      }
       case 'CONQUEST':
         if (summary()) summary().textContent = `🏳️ ${territory(p.to).name} falls to ${player.name}!`;
         break;

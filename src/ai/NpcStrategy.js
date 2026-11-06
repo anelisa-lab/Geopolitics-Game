@@ -8,7 +8,8 @@ const DEFAULT_SETTINGS = {
   threatThreshold: 0.6,  // a country is "in danger" if an enemy could take it with this chance
 };
 
-const percent = (chance) => `${Math.round(chance * 100)}%`;
+// "over 99%" rather than "100%" unless it really is certain
+const percent = (chance) => (chance > 0.99 && chance < 1 ? 'over 99%' : `${Math.round(chance * 100)}%`);
 
 // Decides what an NPC does on its turn. It looks at the whole board, works out the
 // odds of every possible attack, and plays to win. Every decision comes with a short
