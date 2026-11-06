@@ -24,6 +24,23 @@
     </div>
     <p class="no-results" id="no-results" hidden>No countries match your search.</p>
 
+    <fieldset class="difficulty-picker">
+      <legend>Difficulty</legend>
+      <% const chosen = values.difficulty || 'normal'; %>
+      <label class="difficulty-option">
+        <input type="radio" name="difficulty" value="easy" <%= chosen === 'easy' ? 'checked' : '' %>>
+        <span><strong>🙂 Easy</strong><small>Cautious rivals who only attack when they're almost sure to win.</small></span>
+      </label>
+      <label class="difficulty-option">
+        <input type="radio" name="difficulty" value="normal" <%= chosen === 'normal' ? 'checked' : '' %>>
+        <span><strong>⚔️ Normal</strong><small>Rivals attack when the odds are in their favour.</small></span>
+      </label>
+      <label class="difficulty-option">
+        <input type="radio" name="difficulty" value="hard" <%= chosen === 'hard' ? 'checked' : '' %>>
+        <span><strong>🔥 Hard</strong><small>Bold rivals who take risks and gang up on whoever is winning.</small></span>
+      </label>
+    </fieldset>
+
     <button type="submit" class="btn">Start game</button>
   </form>
 </section>

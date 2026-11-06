@@ -6,6 +6,16 @@ const DEFAULT_SETTINGS = {
   attackThreshold: 0.55, // only attack with at least this chance of conquering
   stopThreshold: 0.35,   // call off an attack once the chance drops below this
   threatThreshold: 0.6,  // a country is "in danger" if an enemy could take it with this chance
+  leaderBonus: 2,        // how much more it wants to attack the strongest rival
+};
+
+// The three difficulty levels a player can choose when starting a game
+export const DIFFICULTIES = {
+  // Cautious: only near-certain attacks, retreats early, doesn't single out the leader
+  easy: { attackThreshold: 0.75, stopThreshold: 0.5, threatThreshold: 0.7, leaderBonus: 0 },
+  normal: DEFAULT_SETTINGS,
+  // Bold: takes even chances, fights on longer, and gangs up on whoever is winning
+  hard: { attackThreshold: 0.45, stopThreshold: 0.25, threatThreshold: 0.5, leaderBonus: 5 },
 };
 
 // "over 99%" rather than "100%" unless it really is certain
@@ -180,7 +190,7 @@ export class NpcStrategy {
         const ownerIsLeader = to.ownerPlayerId === leaderId;
 
         // What we gain if it works, minus what we risk losing if it doesn't
-        const gain = conquestBonus(to.soldierValue) + to.soldierValue + (eliminates ? 5 : 0) + (ownerIsLeader ? 2 : 0);
+        const gain = conquestBonus(to.soldierValue) + to.soldierValue + (eliminates ? 5 : 0) + (ownerIsLeader ? this.#settings.leaderBonus : 0);
         const risk = (1 - chance) * 0.3 * (attackers - 1);
         const score = chance * gain - risk;
 

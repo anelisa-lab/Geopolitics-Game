@@ -14,7 +14,7 @@ export async function showNewGame(req, res) {
 }
 
 export async function createGame(req, res, next) {
-  const values = { iso2: req.body.iso2, title: req.body.title };
+  const values = { iso2: req.body.iso2, title: req.body.title, difficulty: req.body.difficulty };
   const result = createGameSchema.safeParse(req.body);
   if (!result.success) return renderNewGame(res, 400, result.error.issues[0].message, values);
 
@@ -58,7 +58,7 @@ function listLocals(basePath, query, result) {
 
 export async function showDashboard(req, res) {
   const query = gameListQuerySchema.parse(req.query);
-    const [result, record] = await Promise.all([
+  const [result, record] = await Promise.all([
     gameService.listMyGames(req.session.user.id, query),
     gameService.playerRecord(req.session.user.id),
   ]);

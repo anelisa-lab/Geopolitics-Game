@@ -26,7 +26,7 @@ export class GameService {
   #engine;
   #npcs;
   #commentary;
-    #notify;
+  #notify;
 
   constructor({
     countries = countryRepository,
@@ -36,7 +36,7 @@ export class GameService {
     engine = new BattleEngine(),
     npcs = npcTurnRunner,
     commentary = null, // tests leave this out, so they never call the real AI
-        notify = null,     // tells watchers about new moves (live spectating)
+    notify = null,     // tells watchers about new moves (live spectating)
   } = {}) {
     this.#countries = countries;
     this.#games = games;
@@ -45,14 +45,14 @@ export class GameService {
     this.#engine = engine;
     this.#npcs = npcs;
     this.#commentary = commentary;
-        this.#notify = notify;
+    this.#notify = notify;
   }
 
   async listCountries() {
     return this.#countries.findAll();
   }
 
-  async createGame(ownerId, { iso2, title }) {
+  async createGame(ownerId, { iso2, title, difficulty = 'normal' }) {
     const allCountries = await this.#countries.findAll();
     const chosen = allCountries.find((country) => country.iso2 === iso2);
     if (!chosen) throw new ValidationError('Pick a country from the list.');
@@ -83,6 +83,7 @@ export class GameService {
       players,
       territories,
       status: 'active',
+      difficulty,
       turnOrder: shuffle(players.map((player) => player.playerId)), // random first player
       currentTurnIndex: 0,
       round: 1,
@@ -185,7 +186,7 @@ export class GameService {
     const humanId = gameDoc.players.find((player) => player.type === 'human').playerId;
 
     if (action) action(game, humanId);
-    this.#npcs.runUntilHumanTurn(game);
+    this.#npcs.runUntilHumanTurn(game, gameDoc.difficulty ?? 'normal'); // older games have no level: normal
 
     const events = game.pullNewEvents();
     if (!events.length) return [];
@@ -200,6 +201,7 @@ export class GameService {
     // The game has just ended: add it to the player's record (exactly once, as a finished
     // game can't be played any further)
     if (wasActive && game.isOver) await this.#users.recordResult(gameDoc.ownerId, game.status);
+
     // Everyone watching this game hears about the new moves straight away
     this.#notify?.(gameDoc._id.toString(), events.at(-1).seq);
     return events;

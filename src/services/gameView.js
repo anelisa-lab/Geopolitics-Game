@@ -1,4 +1,5 @@
 const STATUS_LABELS = { active: 'In progress', won: 'Victory', lost: 'Defeated' };
+const DIFFICULTY_LABELS = { easy: 'Easy', normal: 'Normal', hard: 'Hard' };
 
 // Everything a game page needs, and nothing private (like the owner's ID)
 export function buildGameView(game, viewerId) {
@@ -40,6 +41,8 @@ export function buildGameView(game, viewerId) {
     title: game.title,
     status: game.status,
     statusLabel: STATUS_LABELS[game.status],
+    difficulty: game.difficulty ?? 'normal',
+    difficultyLabel: DIFFICULTY_LABELS[game.difficulty ?? 'normal'],
     round: game.round,
     phase: game.phase,
     currentPlayer: players.find((player) => player.isCurrent),
@@ -69,6 +72,7 @@ export function buildGameSummary(game, viewerId, ownerName = null) {
     humanCountry: human.name,
     humanIso2: human.playerId,
     ownerName,
+    difficultyLabel: DIFFICULTY_LABELS[game.difficulty ?? 'normal'],
     status: game.status,
     statusLabel: STATUS_LABELS[game.status],
     round: game.round,

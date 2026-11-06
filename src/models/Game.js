@@ -39,6 +39,7 @@ const gameSchema = new mongoose.Schema(
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, trim: true, maxlength: 60, default: '' },
     status: { type: String, enum: ['active', 'won', 'lost'], default: 'active' },
+    difficulty: { type: String, enum: ['easy', 'normal', 'hard'], default: 'normal' },
     round: { type: Number, default: 1, min: 1 },
     phase: { type: String, enum: PHASES, default: 'PLANNING' },
     turnOrder: { type: [String], required: true },
@@ -54,12 +55,11 @@ const gameSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    // Stops two requests sent at the same moment (e.g. a double-click) both changing the game
     optimisticConcurrency: true,
   }
 );
 
-gameSchema.index({ ownerId: 1, updatedAt: -1 }); // "My games", newest first
-gameSchema.index({ status: 1, updatedAt: -1 });  // "Browse games" filtered by status
+gameSchema.index({ ownerId: 1, updatedAt: -1 });
+gameSchema.index({ status: 1, updatedAt: -1 });
 
 export const Game = mongoose.model('Game', gameSchema);

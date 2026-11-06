@@ -15,7 +15,10 @@
     <tbody>
       <% items.forEach((game) => { %>
         <tr>
-          <td><a href="/games/<%= game.id %>"><%= game.title %></a></td>
+          <td>
+            <a href="/games/<%= game.id %>"><%= game.title %></a>
+            <small class="difficulty-tag difficulty-<%= game.difficultyLabel.toLowerCase() %>"><%= game.difficultyLabel %></small>
+          </td>
           <% if (showOwner) { %><td><%= game.ownerName %></td><% } %>
           <td>
             <img src="https://flagcdn.com/w40/<%= game.humanIso2.toLowerCase() %>.png" alt="" width="24" height="17">

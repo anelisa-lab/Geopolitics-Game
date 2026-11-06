@@ -50,6 +50,7 @@ Built for the **INF4001N Entrance Exam 2027** (Department of Information Systems
 - **Animated battles:** a battle window with dice that tumble, then land showing their dots, with who won each pair. Countries flash in their new owner's colour when they change hands.
 - **Sound effects** for rolls, conquests, losing a country, your turn, victory and defeat, made in the browser with the Web Audio API (no audio files), with a mute button that's remembered.
 - **NPCs that play to win:** each rival calculates the exact odds of every possible attack and explains every decision in the live feed.
+- **Difficulty levels:** choose Easy, Normal or Hard when starting a game. Easy NPCs only take near-certain attacks; Hard NPCs take even chances, fight on longer and gang up on whoever is winning.
 - **Move-by-move playback** of the other players' turns, with **⏩ Fast-forward** that speeds it up while still showing every move.
 - **AI battle commentary** on every dice roll (Google Gemini), with ready-made lines if the AI is unavailable.
 - **Live spectating (bonus):** a 🔴 LIVE badge with the number of viewers, and moves appearing for watchers within a fraction of a second.
@@ -298,6 +299,8 @@ tests/                        99 automated tests
 ## NPC strategy
 
 Every NPC uses the same strategy (`src/ai/NpcStrategy.js`), as the brief allows.
+
+**Difficulty levels** change four settings: the odds needed to attack (Easy 75%, Normal 55%, Hard 45%), the odds below which an attack is called off (50% / 35% / 25%), when a country counts as in danger (70% / 60% / 50%), and how much the NPCs prefer attacking the strongest rival (0 / 2 / 5 points). Games created before difficulty levels existed play as Normal.
 
 **The odds** (`src/ai/probability.js`): the exact chance that an attack conquers its target. Each pair of dice is independent: the attacker wins 15/36 of the time, the defender 15/36, and 6/36 is a tie. From any position the calculation adds up every possible result of the next roll, weighted by its probability, then repeats from each new position, remembering answers so each position is only worked out once. It matches hand-worked answers exactly (2 vs 1 is 50%, 3 vs 1 is 75%) and a 200,000-battle simulation to within 0.1%.
 

@@ -77,9 +77,7 @@ a { color: #2346c4; }
 /* ---------- Navigation (task 4.5) ---------- */
 .navbar a.active:not(.btn) { box-shadow: 0 2px 0 #7e9cff; padding-bottom: 2px; }
 .navbar a:focus-visible, .link-button:focus-visible { outline: 2px solid #7e9cff; outline-offset: 3px; border-radius: 4px; }
-/* Player's record (task 6.5) */
-.record { color: #5a6575; margin: 4px 0 0; }
-.record strong { color: #16202c; }
+
 /* ---------- Home and How to play (task 7.2) ---------- */
 .hero-lede { font-size: 19px; color: #3d4756; max-width: 620px; margin: 0 auto 24px; }
 .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
@@ -136,3 +134,15 @@ h1, h2, h3, .brand, .card-soldiers, .side-soldiers, .game-stats strong, .chip-tu
 @media (prefers-reduced-motion: reduce) {
   .btn, .feature { transition: none; }
 }
+
+/* ---------- Difficulty levels (Day 7) ---------- */
+.difficulty-picker { border: none; padding: 0; margin: 14px 0 0; display: grid; gap: 8px; }
+.difficulty-picker legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
+.difficulty-option { display: flex; gap: 10px; align-items: flex-start; border: 1px solid #cfd6df; border-radius: 10px; padding: 10px 12px; cursor: pointer; font-weight: 400; margin: 0; background: #fff; }
+.difficulty-option:has(input:checked) { border-color: #2346c4; background: #eef2fd; box-shadow: inset 0 0 0 1px #2346c4; }
+.difficulty-option input { margin-top: 4px; }
+.difficulty-option span { display: grid; gap: 2px; }
+.difficulty-option small { color: #5a6575; }
+.difficulty-tag { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: #eef1f5; color: #3d4756; }
+.difficulty-easy { background: #e3f5ec; color: #135c39; }
+.difficulty-hard { background: #fdecec; color: #8a1f1f; }

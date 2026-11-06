@@ -1,4 +1,4 @@
-import { NpcStrategy } from '../ai/NpcStrategy.js';
+import { NpcStrategy, DIFFICULTIES } from '../ai/NpcStrategy.js';
 
 const MAX_NPC_TURNS = 50;     // safety nets, so a bug can never loop forever
 const MAX_ROLLS_PER_ATTACK = 200;
@@ -7,22 +7,25 @@ const MAX_ROLLS_PER_ATTACK = 200;
 // Each decision is recorded with its explanation before it's carried out,
 // so the player can follow what each NPC did and why.
 export class NpcTurnRunner {
-  #strategy;
+  #strategies;
 
-  constructor(strategy = new NpcStrategy()) {
-    this.#strategy = strategy;
+  // One strategy per difficulty level. Passing a single strategy uses it for every level
+  constructor(strategy = null) {
+    this.#strategies = strategy
+      ? { easy: strategy, normal: strategy, hard: strategy }
+      : Object.fromEntries(Object.entries(DIFFICULTIES).map(([level, settings]) => [level, new NpcStrategy(settings)]));
   }
 
-  runUntilHumanTurn(game) {
+  runUntilHumanTurn(game, difficulty = 'normal') {
+    const strategy = this.#strategies[difficulty] ?? this.#strategies.normal;
     let turns = 0;
     while (!game.isOver && game.currentPlayer.isNpc && turns < MAX_NPC_TURNS) {
-      this.#playTurn(game, game.currentPlayer.playerId);
+      this.#playTurn(game, game.currentPlayer.playerId, strategy);
       turns++;
     }
   }
 
-  #playTurn(game, npcId) {
-    const strategy = this.#strategy;
+  #playTurn(game, npcId, strategy) {
 
     // 1. Reinforcements (from round 2)
     if (game.phase === 'REINFORCE') {

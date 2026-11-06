@@ -396,6 +396,7 @@ class GameScreen {
     this.#els.meta.replaceChildren(
       el('span', { class: 'chip' }, `Round ${v.round}`),
       el('span', { class: 'chip' }, PHASE_LABELS[v.phase]),
+      el('span', { class: `chip difficulty-${v.difficulty}` }, `Difficulty: ${v.difficultyLabel}`),
       el('span', { class: 'chip chip-turn', style: { '--owner': v.currentPlayer.color } }, turn),
     );
   }
