@@ -9,6 +9,8 @@ import { celebrate } from './celebrate.js';
 
 const POLL_MS = 15000; // a backup check, in case the live connection drops
 const HISTORY_SIZE = 150; // how many past events the feed shows when the page opens
+const FLASH_MS = 1600;     // how long a country flashes after changing hands
+
 const PHASE_LABELS = {
   REINFORCE: 'Placing reinforcements',
   PLANNING: 'Planning',
@@ -51,14 +53,16 @@ class GameScreen {
   #wake = null;              // ends the current pause early when fast-forward is switched on
   #selected = null;          // the player's country chosen to attack or move from
   #allocations = new Map();  // reinforcements placed but not yet confirmed
-    #gameId;
+  #gameId;
   #updateWaiting = false;    // news arrived while the screen was busy: check again when it's free
   #summary = null;           // the game-over stats
   #summaryRequested = false;
+  #owners = new Map();       // who owned each country at the last redraw
+  #flashes = new Map();      // countries that just changed hands, and when
 
   constructor(root, initialState) {
     this.#api = createApi(root.dataset.gameId);
-        this.#gameId = root.dataset.gameId;
+    this.#gameId = root.dataset.gameId;
     this.#state = initialState;
     this.#view = structuredClone(initialState);
     this.#feed = new Feed(document.getElementById('feed'));
@@ -74,7 +78,7 @@ class GameScreen {
       arenaTurn: document.getElementById('arena-turn'),
       arenaThought: document.getElementById('arena-thought'),
       arenaFight: document.getElementById('arena-fight'),
-            live: document.getElementById('live-badge'),
+      live: document.getElementById('live-badge'),
     };
 
     try {
@@ -95,7 +99,8 @@ class GameScreen {
   async start() {
     this.#render();
     try {
-           // Event numbers have no gaps, so "after eventSeq - 150" means "the last 150"
+      // The latest part of the history goes straight into the feed (no need to replay it).
+      // Event numbers have no gaps, so "after eventSeq - 150" means "the last 150"
       const latest = this.#state.eventSeq ?? 0;
       const { events } = await this.#api.events(Math.max(0, latest - HISTORY_SIZE));
       this.#feed.add(events, this.#view);
@@ -104,7 +109,7 @@ class GameScreen {
       toast('The game history could not be loaded. Refresh to try again.', 'error');
     }
     this.#resume();
-        this.#connectLive();
+    this.#connectLive();
     setInterval(() => this.#poll(), POLL_MS);
   }
 
@@ -142,12 +147,12 @@ class GameScreen {
     } finally {
       this.#busy = false;
       this.#render();
-            this.#checkWaiting();
+      this.#checkWaiting();
     }
   }
 
   // New board from the server, plus the moves that led to it. The moves are played back in order
-    #apply(state, events = []) {
+  #apply(state, events = []) {
     const justWon = this.#state.status === 'active' && state.status === 'won';
     this.#state = state;
     if (justWon) celebrate();
@@ -185,7 +190,7 @@ class GameScreen {
     this.#playing = false;
     this.#els.arena.hidden = true;
     this.#render();
-        this.#checkWaiting();
+    this.#checkWaiting();
     if (othersMoved && this.#state.isOwner && this.#state.isHumanTurn) toast('Your turn!');
   }
 
@@ -231,7 +236,7 @@ class GameScreen {
 
   // Watchers (and other tabs) pick up new moves every few seconds
   async #poll() {
-        if (this.#busy || this.#playing || document.hidden || this.#dialog.open) {
+    if (this.#busy || this.#playing || document.hidden || this.#dialog.open) {
       this.#updateWaiting = true; // check again as soon as the screen is free
       return;
     }
@@ -243,7 +248,8 @@ class GameScreen {
       // try again next time
     }
   }
-    // ---------- Live spectating (bonus feature) ----------
+
+  // ---------- Live spectating (bonus feature) ----------
 
   // The server tells everyone watching this game the moment a move is saved
   #connectLive() {
@@ -308,10 +314,10 @@ class GameScreen {
           versus(territory(p.from), territory(p.to), p.attackerSoldiers, p.defenderSoldiers),
           el('div', { class: 'dice' }),
           el('p', { class: 'roll-summary' }),
-                    el('p', { class: 'commentary' }),
+          el('p', { class: 'commentary' }),
         );
         break;
-       case 'DICE_ROLL': {
+      case 'DICE_ROLL': {
         const dice = arenaFight.querySelector('.dice');
         if (!dice) break;
         const from = territory(p.from);
@@ -370,7 +376,7 @@ class GameScreen {
     );
   }
 
-    #renderBanner() {
+  #renderBanner() {
     const v = this.#view;
     const banner = this.#els.banner;
     banner.className = 'game-banner';
@@ -510,6 +516,13 @@ class GameScreen {
   }
 
   #renderBoard() {
+    // Spot countries that changed hands since the last redraw, so they can flash
+    const now = performance.now();
+    for (const territory of this.#view.territories) {
+      const before = this.#owners.get(territory.iso2);
+      if (before && before !== territory.ownerPlayerId) this.#flashes.set(territory.iso2, now);
+      this.#owners.set(territory.iso2, territory.ownerPlayerId);
+    }
     this.#els.board.replaceChildren(...this.#view.territories.map((territory) => this.#card(territory)));
   }
 
@@ -520,6 +533,9 @@ class GameScreen {
     const reinforcing = this.#canAct && this.#state.phase === 'REINFORCE';
     const planning = this.#canAct && this.#state.phase === 'PLANNING';
     const fight = v.activeAttack;
+    // The board is redrawn often, so a flash carries on from where it had got to
+    const flashAge = performance.now() - (this.#flashes.get(territory.iso2) ?? -Infinity);
+    const flashing = flashAge < FLASH_MS;
 
     // In planning, which cards can be clicked right now?
     let clickable = false;
@@ -545,6 +561,7 @@ class GameScreen {
       clickable && 'clickable',
       fight && fight.from === territory.iso2 && 'fight-from',
       fight && fight.to === territory.iso2 && 'fight-to',
+      flashing && 'flash',
     ].filter(Boolean).join(' ');
 
     const content = [
@@ -566,6 +583,7 @@ class GameScreen {
     }
 
     const style = { '--owner': territory.ownerColor };
+    if (flashing) style['--flash-delay'] = `-${Math.round(flashAge)}ms`;
     if (planning) {
       return el('button', {
         class: classes, style, disabled: !clickable,
@@ -681,7 +699,7 @@ class GameScreen {
       versus(from, to),
       dice,
       summary,
-            el('p', { class: 'commentary', id: 'battle-commentary' }),
+      el('p', { class: 'commentary', id: 'battle-commentary' }),
       el('div', { class: 'dialog-actions' },
         el('button', { class: 'btn btn-secondary', id: 'stop-btn', onClick: () => this.#stopAttack() }, 'Stop attack (ends turn)'),
         el('button', { class: 'btn btn-danger', id: 'roll-btn', onClick: () => this.#roll(from, to) }, '🎲 Roll')),
@@ -707,9 +725,8 @@ class GameScreen {
       this.#dialog.querySelector('[data-role="attacker"]').textContent = roll.attackerSoldiers;
       this.#dialog.querySelector('[data-role="defender"]').textContent = roll.defenderSoldiers;
       this.#dialog.querySelector('.roll-summary').textContent = rollSummary(roll, fromBefore, toBefore);
-            const commentary = events.find((e) => e.type === 'DICE_ROLL')?.commentary;
+      const commentary = events.find((e) => e.type === 'DICE_ROLL')?.commentary;
       this.#dialog.querySelector('#battle-commentary').textContent = commentary ? `🎙️ ${commentary}` : '';
-
     }
 
     const actions = this.#dialog.querySelector('.dialog-actions');
@@ -784,7 +801,7 @@ class GameScreen {
   #closeDialog() {
     if (this.#dialog.open) this.#dialog.close();
     this.#render();
-        this.#checkWaiting();
+    this.#checkWaiting();
   }
 }
 

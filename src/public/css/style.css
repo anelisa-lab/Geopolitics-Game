@@ -102,3 +102,37 @@ a { color: #2346c4; }
 .tip { background: #fff6dd; padding: 10px 14px; border-radius: 8px; }
 .example { background: #fff; border-left: 4px solid #2346c4; padding: 12px 16px; border-radius: 0 8px 8px 0; }
 .rules-cta { margin: 32px 0 48px; }
+
+/* ---------- Visual refresh (Day 7) ---------- */
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: #f2f4f8;
+  background-image: radial-gradient(#d9e0ea 1px, transparent 1.3px); /* a faint dotted "map" grid */
+  background-size: 22px 22px;
+}
+h1, h2, h3, .brand, .card-soldiers, .side-soldiers, .game-stats strong, .chip-turn {
+  font-family: 'Chakra Petch', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+.navbar { background: linear-gradient(90deg, #0f1724, #1c2d4d); box-shadow: 0 2px 14px rgba(10, 20, 40, 0.25); }
+.navbar a:not(.btn) { padding: 6px 10px; border-radius: 8px; transition: background 0.15s; }
+.navbar a:not(.btn):hover { background: rgba(255, 255, 255, 0.08); }
+.navbar a.active:not(.btn) { box-shadow: none; background: rgba(126, 156, 255, 0.2); }
+
+.btn { transition: transform 0.12s, box-shadow 0.12s; box-shadow: 0 2px 8px rgba(35, 70, 196, 0.25); }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(35, 70, 196, 0.3); }
+.btn:active, .btn:disabled { transform: none; }
+
+.hero h1 {
+  font-size: clamp(34px, 6vw, 58px);
+  line-height: 1.05;
+  background: linear-gradient(90deg, #16202c 10%, #2346c4 55%, #c4352f 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.feature, .form-card, .table-wrap, .empty { box-shadow: 0 6px 20px rgba(22, 32, 44, 0.06); }
+.feature { transition: transform 0.15s, box-shadow 0.15s; }
+.feature:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(22, 32, 44, 0.1); }
+@media (prefers-reduced-motion: reduce) {
+  .btn, .feature { transition: none; }
+}
