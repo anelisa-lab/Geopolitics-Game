@@ -40,6 +40,7 @@ Built for the **INF4001N Entrance Exam 2027** (Department of Information Systems
 ---
 
 ## Features
+- **Settings and dark mode** – a ⚙️ Settings window lets you choose Light, Dark or "Match my device", and turn sound and fast-forward on or off. Your choices are saved in your browser.
 
 - **Accounts:** sign up, log in and log out, with hashed passwords and secure sessions.
 - **Multiple games:** start as many games as you like and resume any of them. **My games** lists them with search, a status filter, sorting and pages, plus your win/loss record.
