@@ -62,6 +62,7 @@ Built for the **INF4001N Entrance Exam 2027** (Department of Information Systems
 |---|---|
 | ![Battle window](docs/screenshots/battle.png) | ![NPC turn with commentary](docs/screenshots/npc-turn.png) |
 | ![My games](docs/screenshots/my-games.png) | ![Victory](docs/screenshots/victory.png) |
+> **About the victory screenshot:** a full game takes many rounds, so to show the victory screen the "Demo: victory" game was set up with the testing-only script `scripts/almostWin.js`. It hands the player every country except one, which is left with 1 soldier, and makes it the player's turn. The final attack, the conquest and the victory screen were then played normally through the game. That is why this game shows a victory after only one turn and small battle stats. The script is never used in normal play, and "Demo: game in progress" is a normal, untouched game.
 
 ---
 
@@ -76,13 +77,13 @@ Built for the **INF4001N Entrance Exam 2027** (Department of Information Systems
 | **OOP: classes, encapsulation** | `src/domain/`: `Game`, `Territory`, `Player` → `HumanPlayer` / `NpcPlayer`, `BattleEngine`, `Dice`, plus `NpcStrategy`, `LlmClient` and `CommentaryService`. Private `#fields`, dependency injection, polymorphism |
 | **Data validation, controls and security** | zod schemas on every input, every rule checked on the server, optimistic locking, cross-site request blocking, rate limits. See [Security](#security) |
 | **Functionality** | Every rule in the brief, each covered by tests. See [Game rules](#game-rules-as-implemented) |
-| **Works correctly; lists; searching; filtering; viewing** | 99 automated tests; My games and Browse games with search, filter, sort and pages; searchable country picker; public game pages |
+| **Works correctly; lists; searching; filtering; viewing** | 105 automated tests; My games and Browse games with search, filter, sort and pages; searchable country picker; public game pages |
 | **User interface** | Clickable board, battle window with animated dice, arena for NPC turns, live feed, colour per player, responsive layout |
 | **Ease of navigation** | Navbar showing the current page, How to play page, clear next-step buttons, empty states, friendly error pages, returns you to the page you wanted after logging in |
 | **Security: authentication and authorisation** | bcrypt, sessions stored in MongoDB, secure cookies; only the game's owner can move, and only on their turn; visitors can only watch |
 | **Sophistication and complexity** | Server-side game engine, exact-probability NPC AI, event log with move-by-move replay, Socket.IO live spectating, batched AI commentary |
 | **AI application** | AI-written battle commentary (Gemini) with fallbacks; NPC decisions based on calculated odds, each with an explanation |
-| **Overall effort** | All of the above, plus 99 tests, an NPC simulation script and a deployed site |
+| **Overall effort** | All of the above, plus 105 tests, an NPC simulation script and a deployed site |
 
 ---
 
@@ -246,7 +247,7 @@ src/
 ├── views/                    EJS pages and partials                                     ← View
 └── public/                   CSS, the game screen's JavaScript modules, site icon
 scripts/                      seedCountries, simulate (NPC check), testAi, almostWin (testing only)
-tests/                        99 automated tests
+tests/                        105 automated tests
 ```
 
 **MVC:** *models* define the data, *views* (EJS) draw pages, *controllers* handle requests. Two extra layers keep things clean: **services** coordinate a move from start to finish, and **repositories** are the only place that talks to MongoDB. Swapping the database would only change `repositories/` and `models/`.
@@ -294,7 +295,7 @@ tests/                        99 automated tests
 - The game ends when the human player is eliminated; NPCs aren't played on to a winner.
 - NPCs play to win from the very first turn, so a player who picks a very small country can be eliminated before their first move.
 - A player's record counts finished games only.
-
+- The "Demo: victory" game was set up with `scripts/almostWin.js` (testing only) so the victory screen could be shown without playing a full game; every other game follows the normal rules.
 ---
 
 ## NPC strategy
@@ -390,7 +391,7 @@ These protections are covered by tests (`tests/security.test.js`, `tests/gameAcc
 
 ## Testing
 
-**99 automated tests**, run with `npm test` (no database or internet needed: tests use stand-ins for the database, dice and AI).
+**105 automated tests**, run with `npm test` (no database or internet needed: tests use stand-ins for the database, dice and AI).
 
 | Area | Test files |
 |---|---|
@@ -432,7 +433,7 @@ npm run dev                 # starts the app at http://localhost:3000
 
 | Command | What it does |
 |---|---|
-| `npm test` | Runs all 99 tests |
+| `npm test` | Runs all 105 tests |
 | `npm start` | Starts the app without auto-restart (as on the live site) |
 | `node scripts/simulate.js 200` | Plays 200 NPC games without a database and reports illegal moves (should be 0) |
 | `node scripts/testAi.js` | Checks the AI settings with one real request |
